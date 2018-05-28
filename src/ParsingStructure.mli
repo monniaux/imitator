@@ -1,7 +1,7 @@
 (*****************************************************************
  *
  *                       IMITATOR
- * 
+ *
  * Laboratoire Specification et Verification (ENS Cachan & CNRS, France)
  * Universite Paris 13, Sorbonne Paris Cite, LIPN (France)
  *
@@ -91,6 +91,12 @@ type linear_constraint =
 
 type convex_predicate = linear_constraint list
 
+type boolean_expression =
+	| True  (* True *)
+	| False (* False *)
+	| And of boolean_expression * boolean_expression (* Conjunction *)
+	| Or of boolean_expression * boolean_expression  (* Disjunction *)
+	| Expression of linear_expression * relop * linear_expression
 
 (****************************************************************)
 (** Automata *)
@@ -104,10 +110,14 @@ type sync =
 	| Sync of sync_name
 	| NoSync
 
-type update = variable_name * parsed_update_arithmetic_expression
-
 type guard = convex_predicate
 type invariant = convex_predicate
+
+type update =
+	| Normal of normal_update
+	| Condition of condition_update
+and normal_update = variable_name * parsed_update_arithmetic_expression
+and condition_update = boolean_expression * update list * update list
 
 (* Transition = Guard * update * sync label * destination location *)
 type transition = guard * update list * sync * location_name
@@ -143,7 +153,7 @@ type automata = automaton list
 
 type state_predicate =
 	| Loc_assignment of automaton_name * location_name
-	| Linear_predicate of linear_constraint	
+	| Linear_predicate of linear_constraint
 
 
 type init_definition = state_predicate list
@@ -180,7 +190,7 @@ type parsed_unreachable_global_location = parsed_unreachable_predicate list
 
 type parsed_property =
 	| Parsed_unreachable_locations of parsed_unreachable_global_location list
-	
+
 	(* DEPRECATED *)
 (* 	| Unreachable_action of sync_name *)
 
@@ -208,7 +218,7 @@ type parsed_property =
 	| TB_Action_precedence_cyclic of sync_name * sync_name * duration
 	(* everytime a2 then a1 happened once within d before *)
 	| TB_Action_precedence_cyclicstrict of sync_name * sync_name * duration
-	
+
 	(* if a1 then eventually a2 within d *)
 	| TB_response_acyclic of sync_name * sync_name * duration
 	(* everytime a1 then eventually a2 within d *)

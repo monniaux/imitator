@@ -29,7 +29,7 @@ Executable imitator
   MainIs:     src/IMITATOR.ml
   BuildDepends: gmp, extlib, ppl, str, unix, threads
 #  CCLib: -lstdc++
-  CCLib: -static '-lppl -ltinfo -lppl_ocaml -lstdc++ -lgmp -lgmpxx'
+  CCLib:  '-lppl -ltinfo -lppl_ocaml -lstdc++ -lgmp -lgmpxx'
 
 # -static to have a static compiling (+ ' ' around)
 # I removed -lcamlrun because I wrote "best" instead of "byte"
