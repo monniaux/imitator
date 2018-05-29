@@ -2184,6 +2184,20 @@ let convert_guard index_of_variables type_of_variables constants guard_convex_pr
 (*------------------------------------------------------------*)
 (* Convert the transitions *)
 (*------------------------------------------------------------*)
+(* Filter the updates that should assign some variable names to be removed to any expression *)
+let rec filter_updates removed_variable_names updates =
+	List.fold_left (fun acc u ->
+		match u with
+		| Normal (variable_name, linear_expression) ->
+			if not (List.mem variable_name removed_variable_names) then u::acc else acc
+		| Condition (boolean_expression, if_update_list, else_update_list) ->
+			(* Here do I test the boolean expression ? *)
+			(Condition (boolean_expression,
+						filter_updates removed_variable_names if_update_list,
+						filter_updates removed_variable_names else_update_list))::acc
+	) [] updates
+
+
 (* Convert the structure: 'automaton_index -> location_index -> list of (action_index, guard, resets, target_state)' into a structure: 'automaton_index -> location_index -> action_index -> list of (guard, resets, target_state)' *)
 let convert_transitions nb_actions index_of_variables constants removed_variable_names type_of_variables transitions : (((AbstractModel.transition list) array) array) array =
 	(* Create the empty array *)
