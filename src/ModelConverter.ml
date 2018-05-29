@@ -2184,7 +2184,7 @@ let convert_guard index_of_variables type_of_variables constants guard_convex_pr
 (*------------------------------------------------------------*)
 (* Convert the transitions *)
 (*------------------------------------------------------------*)
-(* Filter the updates that should assign some variable names to be removed to any expression *)
+(* Filter the updates that should assign some variable names that are not used *)
 let rec filter_updates removed_variable_names updates =
 	List.fold_left (fun acc u ->
 		match u with
@@ -2222,10 +2222,7 @@ let convert_transitions nb_actions index_of_variables constants removed_variable
 				let converted_guard = convert_guard index_of_variables type_of_variables constants guard in
 
 				(* Filter the updates that should assign some variable name to be removed to any expression *)
-				let filtered_updates = List.filter (fun (variable_name, (*linear_expression*)_) ->
-					not (List.mem variable_name removed_variable_names)
-				) updates
-				in
+				let filtered_updates = filter_updates removed_variable_names updates in
 
 				(* Flag to check if there are clock resets only to 0 *)
 				let only_resets = ref true in
