@@ -1,12 +1,12 @@
 (************************************************************
  *
  *                       IMITATOR
- * 
+ *
  * Laboratoire Spécification et Vérification (ENS Cachan & CNRS, France)
  * LIPN, Université Paris 13, Sorbonne Paris Cité (France)
- * 
+ *
  * Module description: Abstract description of the input model
- * 
+ *
  * File contributors : Étienne André
  * Created           : 2009/09/11
  * Last modified     : 2018/02/23
@@ -81,7 +81,7 @@ and discrete_factor =
 (************************************************************)
 
 (** update: variable_index := linear_term *)
-type clock_update = clock_index 
+type clock_update = clock_index
 
 type clock_updates =
 	(* No update at all *)
@@ -119,9 +119,23 @@ type guard =
 (** Invariant: linear constraint *)
 type invariant = LinearConstraint.pxd_linear_constraint
 
-(** Transition: guard, updates, destination location *)
-type transition = guard * clock_updates * discrete_update list * location_index
+(** Boolean expressions **)
+type boolean_expression =
+	| True
+	| False
+	| And of boolean_expression * boolean_expression
+	| Or of boolean_expression * boolean_expression
+	| Expression of discrete_guard
 
+type updates = {
+	clock: clock_updates;
+	discrete: discrete_update list;
+	conditional: conditional_update list;
+}
+and conditional_update = guard * updates * updates
+
+(** Transition: guard, updates, destination location *)
+type transition = guard * updates * location_index
 
 (************************************************************)
 (** Definition of correctness property *)
@@ -179,7 +193,7 @@ type property =
 	| TB_Action_precedence_cyclic of action_index * action_index * duration
 	(* everytime a2 then a1 happened once within d before *)
 	| TB_Action_precedence_cyclicstrict of action_index * action_index * duration
-	
+
 	(* if a1 then eventually a2 within d *)
 	| TB_response_acyclic of action_index * action_index * duration
 	(* everytime a1 then eventually a2 within d *)
@@ -191,7 +205,7 @@ type property =
 	| Sequence_acyclic of action_index list
 	(* sequence: always a1, ..., an *)
 	| Sequence_cyclic of action_index list
-	
+
 	(* Would be better to have an "option" type *)
 	| Noproperty
 
@@ -253,7 +267,7 @@ type abstract_model = {
 	nb_discrete : int;
 	nb_parameters : int;
 	nb_variables : int;
-	
+
 	(* Is there any stopwatch in the model? *)
 	has_stopwatches : bool;
 	(* Is the model an L/U-PTA? *)
@@ -286,12 +300,12 @@ type abstract_model = {
 	variable_names : variable_index -> variable_name;
 	(* The type of variables *)
 	type_of_variables : variable_index -> var_type;
-	
+
 	(* The automata *)
 	automata : automaton_index list;
 	(* The automata names *)
 	automata_names : automaton_index -> automaton_name;
-	
+
 	(* The locations for each automaton *)
 	locations_per_automaton : automaton_index -> location_index list;
 	(* The location names for each automaton *)
@@ -314,10 +328,10 @@ type abstract_model = {
 
 	(* The cost for each automaton and each location *)
 	costs : automaton_index -> location_index -> LinearConstraint.p_linear_term option;
-	
+
 	(* The invariant for each automaton and each location *)
 	invariants : automaton_index -> location_index -> invariant;
-	
+
 	(* The transitions for each automaton and each location and each action *)
 	transitions : automaton_index -> location_index -> action_index -> (transition list);
 	(* The list of clocks stopped for each automaton and each location *)
@@ -342,11 +356,9 @@ type abstract_model = {
 	projection : projection;
 	(* Parameter to be minimized or maximized *)
 	optimized_parameter : optimization;
-	
+
 	(* Set of polyhedra (only used for direct cartography without running the model) *)
 	(*** BADPROG ***)
 	(*** TODO: simplify this mode!!! (and remove from abstract model...) ***)
 (* 	carto : (LinearConstraint.p_linear_constraint * StateSpace.tile_nature) list * (NumConst.t * NumConst.t) * (NumConst.t * NumConst.t); *)
 }
-
-

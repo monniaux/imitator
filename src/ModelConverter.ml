@@ -2252,8 +2252,8 @@ let convert_transitions nb_actions index_of_variables constants removed_variable
 				) filtered_updates
 				in
 
-(*				(* Convert the updates *)
-				let converted_updates = List.map (fun (variable_name, parsed_update_arithmetic_expression) ->
+				(* Convert the updates *)
+				(*let converted_updates = List.map (fun (variable_name, parsed_update_arithmetic_expression) ->
 					let variable_index = Hashtbl.find index_of_variables variable_name in
 					let linear_term = linear_term_of_parsed_update_arithmetic_expression index_of_variables constants parsed_update_arithmetic_expression in
 					(variable_index, linear_term)
