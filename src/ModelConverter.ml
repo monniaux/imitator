@@ -2198,6 +2198,30 @@ let rec filter_updates removed_variable_names updates =
 	) [] updates
 
 
+
+
+let rec parsed_updates type_of_variables index_of_variables only_resets filtered_updates =
+	let is_clock_update (variable_name, parsed_update_arithmetic_expression) =
+		if type_of_variables (Hashtbl.find index_of_variables variable_name) = Var_type_clock then (
+			(* Update flag *)
+			if parsed_update_arithmetic_expression <> Parsed_UAE_term (Parsed_UT_factor (Parsed_UF_constant NumConst.zero)) then(
+				only_resets := false;
+			);
+			true
+		) else
+			false
+	in
+	List.fold_left (fun acc update ->
+		match update with
+			| Normal u ->
+				let is_clk = is_clock_update type_of_variables index_of_variables only_resets u in
+					if is_clk then {acc with clock = update::acc.clock } else {acc with discrete = update::acc.discrete}
+			| Condition (g,if_u,else_u) ->
+				let new_condition = Condition (g, parsed_updates if_u, parsed_updates else_u ) in
+					{acc with conditional = new_condition::acc.conditional}
+		) {clock=[]; discrete=[]; conditional=[]} filtered_updates
+
+
 (* Convert the structure: 'automaton_index -> location_index -> list of (action_index, guard, resets, target_state)' into a structure: 'automaton_index -> location_index -> action_index -> list of (guard, resets, target_state)' *)
 let convert_transitions nb_actions index_of_variables constants removed_variable_names type_of_variables transitions : (((AbstractModel.transition list) array) array) array =
 	(* Create the empty array *)
@@ -2239,18 +2263,11 @@ let convert_transitions nb_actions index_of_variables constants removed_variable
 				) converted_updates
 				in*)
 				(* Split between the clock and discrete updates *)
-				let parsed_clock_updates, parsed_discrete_updates = List.partition (fun (variable_name, parsed_update_arithmetic_expression) ->
-					(* Retrieve variable type *)
-					if type_of_variables (Hashtbl.find index_of_variables variable_name) = Var_type_clock then(
-						(* Update flag *)
-						if parsed_update_arithmetic_expression <> Parsed_UAE_term (Parsed_UT_factor (Parsed_UF_constant NumConst.zero)) then(
-							only_resets := false;
-						);
-						true
-					)else
-						false
+				let parsed_updates = parsed_updates type_of_variables index_of_variables only_resets filtered_updates in
+				(* let parsed_clock_updates, parsed_discrete_updates = List.partition (fun (variable_name, parsed_update_arithmetic_expression) ->
+					is_clock_update type_of_variables index_of_variables only_resets (variable_name, parsed_update_arithmetic_expression)
 				) filtered_updates
-				in
+				in *)
 
 				(* Convert the updates *)
 				(*let converted_updates = List.map (fun (variable_name, parsed_update_arithmetic_expression) ->
