@@ -429,7 +429,6 @@ let continuous_part_of_guard (*: LinearConstraint.pxd_linear_constraint*) = func
 	| Continuous_guard continuous_guard -> continuous_guard
 	| Discrete_continuous_guard discrete_continuous_guard -> discrete_continuous_guard.continuous_guard
 
-
 (*** WARNING! big hack: due to the fact that StateSpace only maintains the action, then we have to hope that the PTA is deterministic to retrieve the edge, and hence the guard ***)
 let get_guard state_space state_index action_index state_index' =
 	(* Retrieve the model *)
@@ -511,6 +510,10 @@ let get_guard state_space state_index action_index state_index' =
 	(* Finally! Return the guard *)
 	guard
 
+(* Get a list with only the clock updates *)
+let get_clock_updates_index_from_transition transition =
+	let _,updates,_ = transition in
+		updates.clock
 
 (*** WARNING! big hack: due to the fact that StateSpace only maintains the action, then we have to hope that the PTA is deterministic to retrieve the edge, and hence the set of clocks to be reset along a transition ***)
 (*** NOTE: the function only works for regular resets (it raises an NotImplemented for other updates) ***)
@@ -536,42 +539,45 @@ let get_resets state_space state_index action_index state_index' =
 		(* If source and target are equal: either a self-loop (if there exists a self-loop with this action), or the current PTA is not concerned by the transition *)
 		if l = l' then (
 			(* Find the transitions l -> action_index -> l' *)
-			(*** NOTE: type transition = guard * clock_updates * discrete_update list * location_index ***)
-			let transitions = List.filter (fun (_,_,_, target) -> target = l') (model.transitions automaton_index l action_index) in
+			(*** NOTE: type transition = guard * updates * location_index ***)
+			let transitions = List.filter (fun (_,_,target) -> target = l') (model.transitions automaton_index l action_index) in
 
 			(* If none: then not concerned -> no reset nor update *)
 			if List.length transitions = 0 then No_update
 
 			(* If exactly one: good situation: find the clock_updates *)
-			else if List.length transitions = 1 then let _,clock_updates,_,_ = List.nth transitions 0 in clock_updates
-				(* If more than one: take the first one (*** HACK ***) and warn *)
-				else(
-					(* Warning *)
-					print_warning ("Non-deterministic PTA! Selecting an edge arbitrarily among the " ^ (string_of_int (List.length transitions)) ^ " transitions from '" ^ (model.location_names automaton_index l) ^ "' via action '" ^ (model.action_names action_index) ^ "' to '" ^ (model.location_names automaton_index l') ^ "' in automaton '" ^ (model.automata_names automaton_index) ^ "'.");
+			else if List.length transitions = 1 then get_clock_updates_index_from_transition (List.hd transitions)
 
-					(* Take arbitrarily the first element *)
-					let _,clock_updates,_,_ = List.nth transitions 0 in clock_updates
-				)
+			(* If more than one: take the first one *** HACK *** and warn *)
+			else(
+				(* Warning *)
+				print_warning ("Non-deterministic PTA! Selecting an edge arbitrarily among the " ^ (string_of_int (List.length transitions)) ^ " transitions from '" ^ (model.location_names automaton_index l) ^ "' via action '" ^ (model.action_names action_index) ^ "' to '" ^ (model.location_names automaton_index l') ^ "' in automaton '" ^ (model.automata_names automaton_index) ^ "'.");
+
+				(* Take arbitrarily the first element *)
+				get_clock_updates_index_from_transition (List.hd transitions)
+			)
 
 		(* Otherwise, if the source and target locations differ: necessarily a transition with this action *)
 		) else (
 			(* Find the transitions l -> action_index -> l' *)
-			let transitions = List.filter (fun (_,_,_, target) -> target = l') (model.transitions automaton_index l action_index) in
+			let transitions = List.filter (fun (_,_,target) -> target = l') (model.transitions automaton_index l action_index) in
 
 			(* There cannot be none *)
 			if List.length transitions = 0 then raise (raise (InternalError("There cannot be no transition from '" ^ (model.location_names automaton_index l) ^ "' to '" ^ (model.location_names automaton_index l') ^ "' with action to '" ^ (model.action_names action_index) ^ "' in automaton '" ^ (model.automata_names automaton_index) ^ ".")))
 
 			(* If exactly one: good situation: return the clock_updates *)
-			else if List.length transitions = 1 then let _,clock_updates,_,_ = List.nth transitions 0 in clock_updates
+			else if List.length transitions = 1 then get_clock_updates_index_from_transition (List.hd transitions)
+
 			(* If more than one: take the first one --- HACK --- and warn *)
 			else (
 				(* Warning *)
 				print_warning ("Non-deterministic PTA! Selecting an edge arbitrarily among the " ^ (string_of_int (List.length transitions)) ^ " transitions from '" ^ (model.location_names automaton_index l) ^ "' via action '" ^ (model.action_names action_index) ^ "' to '" ^ (model.location_names automaton_index l') ^ "' in automaton '" ^ (model.automata_names automaton_index) ^ "'.");
 
-				(* Take arbitrarily the first element *)
-				let _,clock_updates,_,_ = List.nth transitions 0 in clock_updates
+				(* Take arbitrarily the first element
+					TODO: It's missing the condition part
+				*)
+				get_clock_updates_index_from_transition (List.hd transitions)
 			)
-
 		) in
 
 		let local_clock_resets =
