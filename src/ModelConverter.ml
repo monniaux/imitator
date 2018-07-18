@@ -812,35 +812,46 @@ let no_variables_in_linear_expression = check_f_in_linear_expression no_variable
 let rec check_update index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name = function
 	| Normal u -> check_update_normal index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name u
 	| Condition u -> check_update_condition index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name u
+
+(* Check that an ùpdate with conditions is well-formed *)
 and check_update_condition index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name (boolean_expression, if_updates, else_updates) =
+	(* Print some information *)
+	print_message Verbose_total ("              Checking one update with conditions");
 	let well_formed = ref true in
 		List.iter (fun update -> if not (check_update index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name update) then well_formed := false) if_updates;
 		List.iter (fun update -> if not (check_update index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name update) then well_formed := false) else_updates;
 	!well_formed
+
+(* check that an update with no conditions is well-formed *)
 and check_update_normal index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name (variable_name, arithmetic_expression) =
 	(* Print some information *)
-	print_message Verbose_total ("              Checking one update");
+	print_message Verbose_total ("              Checking one update normal");
 
-	(* Check whether this variable is to be removed because unused elswhere than in resets *)
+	(* Check whether this variable is to be removed because unused elsewhere than in resets *)
 	let to_be_removed = List.mem variable_name removed_variable_names in
 
 	(* Get the index of the variable *)
 	let index, declared = try (Hashtbl.find index_of_variables variable_name, true)
 		with Not_found -> (
-			if to_be_removed then 0, true else(
-				print_error ("The variable '" ^ variable_name ^ "' used in an update in automaton '" ^ automaton_name ^ "' was not declared."); 0, false
+			if to_be_removed then 0, true else (
+				print_error ("The variable '" ^ variable_name ^ "' used in an update in automaton '" ^ automaton_name ^ "' was not declared.");
+				0, false
 			)
 		)
 	in
-	if not declared then false else(
+
+	(* return false (i.e., the update is not well-formed) because the variable is not declared *)
+	if not declared then false else (
 		(* Only check the rest if the variable is not to be removed *)
-		if to_be_removed then true else(
+		if to_be_removed then true else (
+
 			(* Get the type of the variable *)
 			print_message Verbose_total ("                Getting the type of the variable'" ^ variable_name ^ "'");
 			let type_of_variable = try (type_of_variables index)
 				with Invalid_argument comment -> (
 				raise (InternalError ("The variable '" ^ variable_name ^ "' was not found in '" ^ automaton_name ^ "', although this has been checked before. OCaml says: " ^ comment ^ "."))
 			) in
+
 			print_message Verbose_total ("                Checking the type of the variable '" ^ variable_name ^ "'");
 			match type_of_variable with
 			(* Type clock: allow any linear term in updates: so just check that variables have been declared *)
@@ -971,12 +982,15 @@ let check_automata index_of_variables type_of_variables variable_names removed_v
 				(* Check the convex predicate *)
 				print_message Verbose_total ("            Checking convex predicate");
 				if not (all_variables_defined_in_convex_predicate variable_names constants convex_predicate) then well_formed := false;
-				(* Check the updates *)
+
+				(* TODO: Check the updates *)
 				print_message Verbose_total ("            Checking updates");
 				List.iter (fun update -> if not (check_update index_of_variables type_of_variables variable_names removed_variable_names constants automaton_name update) then well_formed := false) updates;
+
 				(* Check the sync *)
 				print_message Verbose_total ("            Checking sync name ");
 				if not (check_sync sync_name_list automaton_name sync) then well_formed := false;
+
 				(* Check that the target location exists for this automaton *)
 				if not (in_array target_location_name locations_per_automaton.(index)) then(
 					print_error ("The target location '" ^ target_location_name ^ "' used in automaton '" ^ automaton_name ^ "' does not exist.");
