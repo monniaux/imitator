@@ -5,4 +5,4 @@ S src/*
 B _build/*
 
 # Packages
-PKG io, gmp
+PKG io, gmp, extlib
