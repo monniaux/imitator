@@ -188,6 +188,7 @@ let find_useless_clocks_in_automata local_clocks_per_automaton =
 
 		(* Compute the predecessor locations and lists of local clock reset *)
 		let predecessors = Array.make nb_locations [] in
+
 		(* For each location in this automaton: *)
 		List.iter (fun location_index ->
 			(* Get the actions for this location *)
@@ -199,22 +200,28 @@ let find_useless_clocks_in_automata local_clocks_per_automaton =
 				let transitions = model.transitions automaton_index location_index action_index in
 
 				(* For each transition starting from this location *)
-				List.iter (fun ((*guard*) _ , clock_updates , (*discrete_update*) _ , target_index) ->
+				(* TODO: Now updates is a record with clock, discrete and conditional updates *)
+				List.iter (fun ((*guard*) _ , clock_updates, target_index) ->
 					(* Get the clocks updated or reset *)
 					let reset_clocks =
-					match clock_updates with
+					match clock_updates.clock with
 					| No_update -> []
 					| Resets list_of_clocks -> list_of_clocks
 					| Updates list_of_clocks_and_updates ->
 						(* Keep only the left part (the clock indexes) *)
 						let left, _ =  List.split list_of_clocks_and_updates in left
 					in
+
 					(* Compute the local clocks updated or reset *)
 					let reset_local_clocks = list_inter reset_clocks local_clocks in
+
 					(* Update the predecessors *)
 					predecessors.(target_index) <- (location_index, reset_local_clocks) :: predecessors.(target_index);
+
 				) transitions; (* end for each transition *)
+
 			) actions_for_this_location; (* end for each action *)
+
 		) locations_for_this_automaton; (* end for each location *)
 
 		(* Print some information *)
@@ -245,8 +252,8 @@ let find_useless_clocks_in_automata local_clocks_per_automaton =
 					print_message Verbose_total ("Clock '" ^ (model.variable_names clock_index) ^ "' is " ^ (if constrained then "" else "NOT ") ^ "constrained in invariant of location '" ^ (model.location_names automaton_index location_index) ^ "'");
 					(* Return true or false *)
 					constrained
-				) locations_for_this_automaton
-				)
+				) locations_for_this_automaton)
+
 				(* All predecessor locations of transitions with a guard involving this clock *)
 				(
 					(* For each location *)
@@ -257,8 +264,9 @@ let find_useless_clocks_in_automata local_clocks_per_automaton =
 						List.fold_left (fun current_list_of_locations action_index ->
 							(* Retrieve the transitions from this location & action *)
 							let transitions = model.transitions automaton_index location_index action_index in
+
 							(* Check if there exists a guard in an outgoing transition where the clock is constrained *)
-							let exists_guard = List.exists (fun (guard , (*clock_updates*)_ , (*discrete_update_list*)_ , (*target_index*)_) ->
+							let exists_guard = List.exists (fun (guard , (*clock_updates*)_ , (*target_index*)_) ->
 								(* Check if the clock is present in the guard *)
 								let constrained = is_constrained_in_guard clock_index guard in
 								(* Print some information *)
@@ -270,9 +278,11 @@ let find_useless_clocks_in_automata local_clocks_per_automaton =
 								(* Return true or false *)
 								constrained
 							) transitions in
+
 							(* Keep the location if there exists a guard *)
 							if exists_guard then location_index :: current_list_of_locations
 							else current_list_of_locations
+
 						) current_list_of_locations actions_for_this_location
 					) [] locations_for_this_automaton
 				)

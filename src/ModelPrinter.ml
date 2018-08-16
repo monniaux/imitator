@@ -1,12 +1,12 @@
 (************************************************************
  *
  *                       IMITATOR
- * 
+ *
  * Laboratoire Spécification et Vérification (ENS Cachan & CNRS, France)
  * LIPN, Université Paris 13, Sorbonne Paris Cité (France)
- * 
+ *
  * Module description: Convert an abstract model to the input syntax of IMITATOR
- * 
+ *
  * File contributors : Étienne André
  * Created           : 2009/12/02
  * Last modified     : 2018/02/23
@@ -132,21 +132,21 @@ let string_of_initially model automaton_index = ""
 (* Convert the invariant of a location into a string *)
 let string_of_invariant model automaton_index location_index =
 (* 	print_message Verbose_high "Entering string_of_invariant…"; *)
-	let result = 
+	let result =
 	(* Invariant *)
 	"invariant "
 	^ (LinearConstraint.string_of_pxd_linear_constraint model.variable_names (model.invariants automaton_index location_index))
-	
-	
+
+
 	(* Handle stopwatches *)
 	^
-	let stopped = model.stopwatches automaton_index location_index in 
+	let stopped = model.stopwatches automaton_index location_index in
 	(* Case 1: no stopwatches *)
 	if stopped = [] then " "
 	(* Case 2: some clocks stopped *)
 	else
 	let stopped_str = string_of_list_of_string_with_sep "," (List.map model.variable_names stopped) in
-	" stop{" ^ stopped_str ^ "}" 
+	" stop{" ^ stopped_str ^ "}"
 	in
 (* 	print_message Verbose_high "Entering string_of_invariant…End"; *)
 	result
@@ -162,12 +162,12 @@ let string_of_sync model action_index =
 
 let string_of_clock_updates model = function
 	| No_update -> ""
-	| Resets list_of_clocks -> 
+	| Resets list_of_clocks ->
 		string_of_list_of_string_with_sep ", " (List.map (fun variable_index ->
 			(model.variable_names variable_index)
 			^ " := 0"
 		) list_of_clocks)
-	| Updates list_of_clocks_lt -> 
+	| Updates list_of_clocks_lt ->
 		string_of_list_of_string_with_sep ", " (List.map (fun (variable_index, linear_term) ->
 			(model.variable_names variable_index)
 			^ " := "
@@ -182,12 +182,12 @@ let string_of_arithmetic_expression variable_names =
 			(string_of_arithmetic_expression discrete_arithmetic_expression)
 			^ " + "
 			^ (string_of_term discrete_term)
-			
+
 		| DAE_minus (discrete_arithmetic_expression, discrete_term) ->
 			(string_of_arithmetic_expression discrete_arithmetic_expression)
-			^ " + " 
+			^ " + "
 			^ (string_of_term discrete_term)
-			
+
 		| DAE_term discrete_term -> string_of_term discrete_term
 
 	and string_of_term = function
@@ -205,7 +205,7 @@ let string_of_arithmetic_expression variable_names =
 			"(" ^ (string_of_term discrete_term) ^ ")"
 			^ " * "
 			^ (string_of_factor discrete_factor)
-		
+
 		(*** TODO: No parentheses on the left for constant or variable / something ***)
 		(*** TODO: No parentheses on the left for something / constant or variable ***)
 		(* Otherwise: parentheses on the left *)
@@ -213,7 +213,7 @@ let string_of_arithmetic_expression variable_names =
 			"(" ^ (string_of_term discrete_term) ^ ")"
 			^ " * "
 			^ (string_of_factor discrete_factor)
-		
+
 		| DT_factor discrete_factor -> string_of_factor discrete_factor
 
 	and string_of_factor = function
@@ -225,8 +225,8 @@ let string_of_arithmetic_expression variable_names =
 	(* Call top-level *)
 	in string_of_arithmetic_expression
 
-	
-	
+
+
 (* Convert a list of updates into a string *)
 let string_of_discrete_updates model updates =
 	string_of_list_of_string_with_sep ", " (List.map (fun (variable_index, arithmetic_expression) ->
@@ -239,8 +239,12 @@ let string_of_discrete_updates model updates =
 
 
 (* Convert a transition of a location into a string *)
-let string_of_transition model automaton_index action_index (guard, clock_updates, discrete_updates, destination_location) =
-	(* Should we add a separating comma between clock updates and discrete updaes? *)
+(* TODO: it must be improved with the new transition type *)
+let string_of_transition model automaton_index action_index (guard, updates, destination_location) =
+	(* Should we add a separating comma between clock updates and discrete updates? *)
+	let clock_updates = updates.clock in
+	let discrete_updates = updates.discrete in
+
 	let separator_comma =
 		let no_clock_updates =
 			clock_updates = No_update || clock_updates = Resets [] || clock_updates = Updates []
@@ -248,7 +252,7 @@ let string_of_transition model automaton_index action_index (guard, clock_update
 		let no_discrete_updates = discrete_updates = [] in
 		if no_clock_updates || no_discrete_updates then "" else ", "
 	in
-	
+
 	"\n\t" ^ "when "
 	(* Convert the guard *)
 	^ (string_of_guard model.variable_names guard)
@@ -262,7 +266,7 @@ let string_of_transition model automaton_index action_index (guard, clock_update
 	(* Discrete updates *)
 	^ (string_of_discrete_updates model discrete_updates)
 	^ "} "
-	
+
 	(* Convert the sync *)
 	^ (string_of_sync model action_index)
 	(* Convert the destination location *)
@@ -274,7 +278,7 @@ let string_of_transition model automaton_index action_index (guard, clock_update
 let string_of_transitions model automaton_index location_index =
 	string_of_list_of_string (
 	(* For each action *)
-	List.map (fun action_index -> 
+	List.map (fun action_index ->
 		(* Get the list of transitions *)
 		let transitions = model.transitions automaton_index location_index action_index in
 		(* Convert to string *)
@@ -297,7 +301,7 @@ let string_of_location model automaton_index location_index =
 	 ^ (match model.costs automaton_index location_index with
 		| None -> ""
 		| Some cost -> "[" ^ (LinearConstraint.string_of_p_linear_term model.variable_names cost) ^ "]"
-	) 
+	)
 	^ ": "
 	^ (string_of_invariant model automaton_index location_index) (* bug here! *)
 	^ (string_of_transitions model automaton_index location_index)
@@ -309,7 +313,7 @@ let string_of_location model automaton_index location_index =
 (* Convert the locations of an automaton into a string *)
 let string_of_locations model automaton_index =
 (* 	print_message Verbose_high "Entering string_of_locations…"; *)
-(*	print_message Verbose_high ("Locations_per_automaton length : " ^ 
+(*	print_message Verbose_high ("Locations_per_automaton length : " ^
 		(string_of_int (List.length (model.locations_per_automaton automaton_index))));*)
 
 	let result =
@@ -365,7 +369,7 @@ let string_of_automata model =
 let string_of_initial_state ()=
 	(* Retrieve the model *)
 	let model = Input.get_model () in
-	
+
 	(* Header of initial state *)
 	"\n"
 	^ "\n" ^ "(************************************************************)"
@@ -373,7 +377,7 @@ let string_of_initial_state ()=
 	^ "\n" ^ "(************************************************************)"
 	^ "\n" ^ ""
 	^ "\n" ^ "init := True"
-	
+
 	(* Initial location *)
 	^ "\n" ^ "\t(*------------------------------------------------------------*)"
 	^ "\n" ^ "\t(* Initial location *)"
@@ -385,7 +389,7 @@ let string_of_initial_state ()=
 
 	(* Handle all (other) PTA *)
 	let inital_global_location  = model.initial_location in
-	let initial_automata = List.map 
+	let initial_automata = List.map
 	(fun automaton_index ->
 		(* Finding the initial location for this automaton *)
 		let initial_location = Location.get_location inital_global_location automaton_index in
@@ -393,14 +397,14 @@ let string_of_initial_state ()=
 		"\n\t& loc[" ^ (model.automata_names automaton_index) ^ "] = " ^ (model.location_names automaton_index initial_location)
 	) pta_without_obs
 	in string_of_list_of_string initial_automata
-	
+
 	(* Initial discrete assignments *)
 	^ "\n" ^ ""
 	^ "\n" ^ "\t(*------------------------------------------------------------*)"
 	^ "\n" ^ "\t(* Initial discrete assignments *)"
 	^ "\n" ^ "\t(*------------------------------------------------------------*)"
 	^
-	let initial_discrete = List.map 
+	let initial_discrete = List.map
 	(fun discrete_index ->
 		(* Finding the initial value for this discrete *)
 		let initial_value = Location.get_discrete_value inital_global_location discrete_index in
@@ -408,7 +412,7 @@ let string_of_initial_state ()=
 		"\n\t& " ^ (model.variable_names discrete_index) ^ " = " ^ (NumConst.string_of_numconst initial_value)
 	) model.discrete
 	in string_of_list_of_string initial_discrete
-	
+
 	(* Initial constraint *)
 	^ "\n" ^ ""
 	^ "\n" ^ "\t(*------------------------------------------------------------*)"
@@ -465,7 +469,7 @@ let string_of_unreachable_location model unreachable_global_location =
 
 
 (** Convert the correctness property to a string *)
-let string_of_property model property = 
+let string_of_property model property =
 	match property with
 	(* An "OR" list of global locations *)
 	| Unreachable_locations unreachable_global_location_list ->
@@ -505,7 +509,7 @@ let string_of_property model property =
 	(* everytime a2 then a1 happened once within d before *)
 	| TB_Action_precedence_cyclicstrict (a1 , a2, d) ->
 		"property := everytime " ^ (model.action_names a2) ^ " then " ^ (model.action_names a1) ^ " has happened once within " ^ (LinearConstraint.string_of_p_linear_term model.variable_names d) ^ " before;"
-	
+
 	(* if a1 then eventually a2 within d *)
 	| TB_response_acyclic (a1 , a2, d) ->
 		"property := if " ^ (model.action_names a2) ^ " then eventually " ^ (model.action_names a1) ^ " within " ^ (LinearConstraint.string_of_p_linear_term model.variable_names d) ^ ";"
@@ -522,7 +526,7 @@ let string_of_property model property =
 	(* always sequence a1, …, an *)
 	| Sequence_cyclic action_index_list ->
 		"property := always sequence (" ^ (string_of_list_of_string_with_sep ", " (List.map model.action_names action_index_list)) ^ ");"
-	
+
 	(*** NOTE: Would be better to have an "option" type ***)
 	| Noproperty -> "(* no property *)"
 
@@ -551,7 +555,7 @@ let string_of_optimization model =
 (* Convert the model into a string *)
 let string_of_model model =
 (* 	print_message Verbose_high "\n Entering string_of_model!…"; *)
-	let result = 
+	let result =
 	(* The header *)
 	string_of_header model
 	(* The variable declarations *)
@@ -591,7 +595,7 @@ let string_of_state model (global_location, linear_constraint) =
 	(* Retrieve the input options *)
 	let options = Input.get_options () in
 
-	"" ^ (Location.string_of_location model.automata_names model.location_names model.variable_names options#output_float global_location) ^ " ==> \n&" ^ (LinearConstraint.string_of_px_linear_constraint model.variable_names linear_constraint) ^ "" 
+	"" ^ (Location.string_of_location model.automata_names model.location_names model.variable_names options#output_float global_location) ^ " ==> \n&" ^ (LinearConstraint.string_of_px_linear_constraint model.variable_names linear_constraint) ^ ""
 
 
 (************************************************************)
@@ -631,4 +635,3 @@ let string_of_v0 model v0 =
 		) model.parameters
 	)
 	)
-
