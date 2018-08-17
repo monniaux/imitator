@@ -1,12 +1,12 @@
 (************************************************************
  *
  *                       IMITATOR
- * 
+ *
  * Laboratoire Spécification et Vérification (ENS Cachan & CNRS, France)
  * LIPN, Université Paris 13, Sorbonne Paris Cité (France)
- * 
+ *
  * Module description: Convert an IMITATOR model to a .jpg file generated thanks to the dot utility
- * 
+ *
  * File contributors : Étienne André
  * Created           : 2012/08/24
  * Last modified     : 2017/06/25
@@ -42,7 +42,7 @@ let string_of_list_of_variables variable_names variables =
 	let variables = List.map variable_names variables in
 	string_of_list_of_string_with_sep "," variables
 
-	
+
 (* Add a header to the model *)
 let string_of_header model =
 	(* Retrieve the input options *)
@@ -54,7 +54,7 @@ let string_of_header model =
 	^ "\n" ^" * Model    : '" ^ options#model_input_file_name ^ "'"
 	^ "\n" ^" * Generated: " ^ (now()) ^ ""
 	^ "\n" ^" ************************************************************/"
-	
+
 
 (* Convert a sync into a string *)
 let string_of_sync model action_index =
@@ -65,19 +65,19 @@ let string_of_sync model action_index =
 
 let string_of_clock_updates model = function
 	| No_update -> ""
-	| Resets list_of_clocks -> 
+	| Resets list_of_clocks ->
 		string_of_list_of_string_with_sep "\\n" (List.map (fun variable_index ->
 			(model.variable_names variable_index)
 			^ ":=0"
 		) list_of_clocks)
-	| Updates list_of_clocks_lt -> 
+	| Updates list_of_clocks_lt ->
 		string_of_list_of_string_with_sep "\\n" (List.map (fun (variable_index, linear_term) ->
 			(model.variable_names variable_index)
 			^ ":="
 			^ (LinearConstraint.string_of_pxd_linear_term model.variable_names linear_term)
 		) list_of_clocks_lt)
 
-	
+
 (* Convert a list of updates into a string *)
 let string_of_discrete_updates model updates =
 	string_of_list_of_string_with_sep "\\n" (List.map (fun (variable_index, arithmetic_expression) ->
@@ -90,7 +90,10 @@ let string_of_discrete_updates model updates =
 
 
 (* Convert a transition of a location into a string *)
-let string_of_transition model automaton_index source_location action_index (guard, clock_updates, discrete_updates, destination_location) =
+(* TODO: Check for new transition type *)
+let string_of_transition model automaton_index source_location action_index (guard, updates, destination_location) =
+	let clock_updates = updates.clock in
+	let discrete_updates = updates.discrete in
 (* s_12 -> s_5 [label="bUp"]; *)
 	"\n\t"
 	(* Source *)
@@ -98,7 +101,7 @@ let string_of_transition model automaton_index source_location action_index (gua
 	(* Destination *)
 	^ " -> "
 	^ (id_of_location automaton_index destination_location)
-	
+
 	^ " ["
 	(* Color and style for sync label *)
 	(* Check if the label is shared *)
@@ -110,7 +113,7 @@ let string_of_transition model automaton_index source_location action_index (gua
 			| Action_type_sync -> ""
 			| Action_type_nosync -> "style=dashed, "
 		)
-		
+
 	(* LABEL *)
 	^ "label=\""
 	(* Guard *)
@@ -128,7 +131,7 @@ let string_of_transition model automaton_index source_location action_index (gua
 	(* Discrete updates *)
 	^ (string_of_discrete_updates model discrete_updates)
 	^ "\"];"
-	
+
 
 (* Convert the transitions of a location into a string *)
 let string_of_transitions model automaton_index location_index =
@@ -137,13 +140,13 @@ let string_of_transitions model automaton_index location_index =
 	let result =
 	string_of_list_of_string (
 (* 	print_message Verbose_high "Entering string_of_transitions…2"; *)
-	
+
 (* 	print_message Verbose_high ("List length string_of_transitions " ^ (string_of_int (List.length (model.actions_per_location automaton_index location_index)) )); *)
-	
+
 (* 	print_message Verbose_high "Entering string_of_transitions…4"; *)
 
 	(* For each action *)
-	List.map (fun action_index -> 
+	List.map (fun action_index ->
 		(* Get the list of transitions *)
 (* 		print_message Verbose_high "Entering string_of_transitions…5"; *)
 		let transitions = model.transitions automaton_index location_index action_index in
@@ -163,7 +166,7 @@ let string_of_transitions model automaton_index location_index =
 
 
 (* Convert a location of an automaton into a string *)
-let string_of_location model automaton_index location_index =	
+let string_of_location model automaton_index location_index =
 	print_message Verbose_high "\n Entering string_of_location…";
 
 	let result =
@@ -173,7 +176,7 @@ let string_of_location model automaton_index location_index =
 	^ (id_of_location automaton_index location_index) ^ "["
 	(* Color *)
 	^ "fillcolor=" ^ (if model.is_urgent automaton_index location_index then "yellow" else "paleturquoise2") (*(color location_index)*) ^ ", style=filled, fontsize=16"
-	
+
 	(* Label: start *)
 	^ ", label=\""
 	(* Label: urgency *)
@@ -188,15 +191,15 @@ let string_of_location model automaton_index location_index =
 		"|" ^
 		(if stopwatches != [] then "stop " ^ string_of_list_of_variables model.variable_names stopwatches else "")
 	) else "")
-	
+
 	(* The end *)
 	^ "}\"];"
-	
+
 	(* Transitions *)
 	^ (string_of_transitions model automaton_index location_index) (*problem here*)
-	
-(*	
-	^ 
+
+(*
+	^
 	^ (match model.costs automaton_index location_index with
 		| None -> ""
 		| Some cost -> "[" ^ (LinearConstraint.string_of_linear_term model.variable_names cost) ^ "]"
@@ -249,7 +252,7 @@ let string_of_automaton model automaton_index =
 	(* ^ "\n/* automaton " ^ (model.automata_names automaton_index) ^ " */" *)
 	^ t3
 	^ "\n/**************************************************/"
-	
+
 	(* Handling the initial arrow *)
 	(* ^ "\n init" ^ (string_of_int automaton_index) ^ "[shape=none, label=\"" ^ (model.automata_names automaton_index) ^ "\"];" *)
 	^ t1
@@ -272,7 +275,7 @@ let string_of_automata model =
 
 	(* Retrieve the input options *)
 	let options = Input.get_options () in
-	
+
 	let vertical_string_of_list_of_variables variables =
 		let variables = List.map model.variable_names variables in
 		string_of_list_of_string_with_sep "\\n" variables
@@ -281,7 +284,7 @@ let string_of_automata model =
 	print_message Verbose_high "Before gathering result in string_of_automata…";
 
 	let result =
-	
+
 	"\n/**************************************************/"
 	^ "\n/* Starting general graph */"
 	^ "\n/**************************************************/"
@@ -310,7 +313,7 @@ Generation time: " ^ (now()) ^ "\"];"
 	^ "\n name -> generation [color=white];"
 	^ "\n generation -> general_info [color=white];"
 
-	
+
 	^ (
 		(* Do not print the observer *)
 		let pta_without_obs = List.filter (fun automaton_index -> not (model.is_observer automaton_index)) model.automata
@@ -333,4 +336,3 @@ let string_of_model model =
 	string_of_header model
 (* 	^  "\n" ^ string_of_declarations model *)
 	^  "\n" ^ string_of_automata model
-

@@ -2213,8 +2213,12 @@ let rec filter_updates removed_variable_names updates =
 
 
 
+type filtered_updates = {clock_updates: normal_update list;
+													discrete_updates: normal_update list;
+													conditional_updates: update list}
 
-let rec parsed_updates type_of_variables index_of_variables only_resets filtered_updates =
+(* TODO: Check this function for the new transition type *)
+let rec parsed_updates type_of_variables index_of_variables only_resets removed_variable_names filtered_updates =
 	let is_clock_update (variable_name, parsed_update_arithmetic_expression) =
 		if type_of_variables (Hashtbl.find index_of_variables variable_name) = Var_type_clock then (
 			(* Update flag *)
@@ -2228,12 +2232,17 @@ let rec parsed_updates type_of_variables index_of_variables only_resets filtered
 	List.fold_left (fun acc update ->
 		match update with
 			| Normal u ->
-				let is_clk = is_clock_update type_of_variables index_of_variables only_resets u in
-					if is_clk then {acc with clock = update::acc.clock } else {acc with discrete = update::acc.discrete}
-			| Condition (g,if_u,else_u) ->
-				let new_condition = Condition (g, parsed_updates if_u, parsed_updates else_u ) in
-					{acc with conditional = new_condition::acc.conditional}
-		) {clock=[]; discrete=[]; conditional=[]} filtered_updates
+				let is_clk = is_clock_update u in
+					if is_clk then {acc with clock_updates = u::acc.clock_updates } else {acc with discrete_updates = u::acc.discrete_updates}
+			(* TODO: Check this *)
+			| Condition (g,if_u,else_u) -> (
+					acc
+					(* let parsed_if_updates = parsed_updates type_of_variables index_of_variables only_resets removed_variable_names (filter_updates removed_variable_names if_u) in
+					let parsed_else_updates = parsed_updates type_of_variables index_of_variables only_resets removed_variable_names (filter_updates removed_variable_names else_u) in
+					let new_condition = Condition (g, parsed_if_updates, parsed_else_updates) in
+						{acc with conditional_updates = new_condition::acc.conditional_updates} *)
+			)
+		) {clock_updates=[]; discrete_updates=[]; conditional_updates=[]} filtered_updates
 
 
 (* Convert the structure: 'automaton_index -> location_index -> list of (action_index, guard, resets, target_state)' into a structure: 'automaton_index -> location_index -> action_index -> list of (guard, resets, target_state)' *)
@@ -2277,7 +2286,9 @@ let convert_transitions nb_actions index_of_variables constants removed_variable
 				) converted_updates
 				in*)
 				(* Split between the clock and discrete updates *)
-				let parsed_updates = parsed_updates type_of_variables index_of_variables only_resets filtered_updates in
+				let parsed_updates = parsed_updates type_of_variables index_of_variables only_resets removed_variable_names filtered_updates in
+				let parsed_clock_updates = parsed_updates.clock_updates in
+				let parsed_discrete_updates = parsed_updates.discrete_updates in
 				(* let parsed_clock_updates, parsed_discrete_updates = List.partition (fun (variable_name, parsed_update_arithmetic_expression) ->
 					is_clock_update type_of_variables index_of_variables only_resets (variable_name, parsed_update_arithmetic_expression)
 				) filtered_updates
@@ -2321,7 +2332,7 @@ let convert_transitions nb_actions index_of_variables constants removed_variable
 					)
 				in
 				(* Update the transition *)
-				array_of_transitions.(automaton_index).(location_index).(action_index) <- (converted_guard, clock_updates, discrete_updates, target_location_index) :: array_of_transitions.(automaton_index).(location_index).(action_index);
+				array_of_transitions.(automaton_index).(location_index).(action_index) <- (converted_guard, {clock=clock_updates; discrete=discrete_updates; conditional=[]}, target_location_index) :: array_of_transitions.(automaton_index).(location_index).(action_index);
 
 			) transitions_for_this_location;
 		) transitions_for_this_automaton;
@@ -3083,7 +3094,7 @@ let abstract_model_of_parsing_structure options (with_special_reset_clock : bool
 			List.iter (fun action_index ->
 				let transitions_for_this_location = transitions automaton_index location_index action_index in
 				(* For all transitions *)
-				List.iter (fun (guard, _, _, _) ->
+				List.iter (fun (guard, _, _) ->
 
 					(* Add guard *)
 					(*** NOTE: quite inefficient as we create a lot of pxd_true_constraint() although we just want to know whether they are L/U or not (but OK because prior to model analysis) ***)
