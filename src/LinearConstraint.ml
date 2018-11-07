@@ -19,7 +19,7 @@
 (************************************************************)
 
 module Ppl = Ppl_ocaml
-open Ppl
+(** DM open Ppl *)
 
 open Gmp.Z.Infixes
 
@@ -294,11 +294,11 @@ let normalize_linear_term (lt : linear_term) : (Ppl.linear_expression * NumConst
 
 		let result =
 		match lt with
-			| Var v -> Variable v, NumConst.one
+			| Var v -> Ppl.Variable v, NumConst.one
 			| Coef c -> (
 					let p = NumConst.get_num c in
 					let q = NumConst.get_den c in
-					Coefficient p, NumConst.numconst_of_zfrac Gmp.Z.one q )
+					Ppl.Coefficient p, NumConst.numconst_of_zfrac Gmp.Z.one q )
 			| Pl (lterm, rterm) -> (
 					let lterm_norm, fl = normalize_linear_term_rec lterm in
 					let rterm_norm, fr = normalize_linear_term_rec rterm in
@@ -306,7 +306,7 @@ let normalize_linear_term (lt : linear_term) : (Ppl.linear_expression * NumConst
 					let ql = NumConst.get_den fl in
 					let pr = NumConst.get_num fr in
 					let qr = NumConst.get_den fr in
-					(Plus (Times (pl *! qr, lterm_norm), (Times (pr *! ql, rterm_norm)))),
+					(Ppl.Plus (Ppl.Times (pl *! qr, lterm_norm), (Ppl.Times (pr *! ql, rterm_norm)))),
 					NumConst.numconst_of_zfrac Gmp.Z.one (ql *! qr))
 			| Mi (lterm, rterm) -> (
 					let lterm_norm, fl = normalize_linear_term_rec lterm in
@@ -315,7 +315,7 @@ let normalize_linear_term (lt : linear_term) : (Ppl.linear_expression * NumConst
 					let ql = NumConst.get_den fl in
 					let pr = NumConst.get_num fr in
 					let qr = NumConst.get_den fr in
-					(Minus (Times (pl *! qr, lterm_norm), (Times (pr *! ql, rterm_norm)))),
+					(Ppl.Minus (Ppl.Times (pl *! qr, lterm_norm), (Ppl.Times (pr *! ql, rterm_norm)))),
 					NumConst.numconst_of_zfrac Gmp.Z.one (ql *! qr))
 			| Ti (fac, term) -> (
 					let term_norm, r = normalize_linear_term_rec term in
@@ -405,68 +405,68 @@ let ippl_generic f counter =
 
 
 let ippl_space_dimension x =
-	ippl_generic (fun () -> ppl_Polyhedron_space_dimension x) ppl_tcounter_space_dimension
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_space_dimension x) ppl_tcounter_space_dimension
 
 let ippl_add_constraints x =
-	ippl_generic (fun () -> ppl_Polyhedron_add_constraints x) ppl_tcounter_add_constraints
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_add_constraints x) ppl_tcounter_add_constraints
 
 (* Return the list of inequalities that build the polyhedron (interface to PPL) *)
 let ippl_get_inequalities x : linear_inequality list =
-	ippl_generic (fun () -> ppl_Polyhedron_get_constraints x) ppl_tcounter_get_inequalities
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_get_constraints x) ppl_tcounter_get_inequalities
 
 let ippl_get_generators poly =
-	ippl_generic (fun () -> ppl_Polyhedron_get_generators poly) ppl_tcounter_get_generators
+	ippl_generic (fun () ->Ppl.ppl_Polyhedron_get_generators poly) ppl_tcounter_get_generators
 
 let ippl_intersection_assign x =
-	ippl_generic (fun () -> ppl_Polyhedron_intersection_assign x) ppl_tcounter_intersection_assign
+	ippl_generic (fun () ->Ppl.ppl_Polyhedron_intersection_assign x) ppl_tcounter_intersection_assign
 
 let ippl_remove_dim poly remove =
-	ippl_generic (fun () -> ppl_Polyhedron_remove_space_dimensions poly remove) ppl_tcounter_remove_space_dimensions
+	ippl_generic (fun () ->Ppl.ppl_Polyhedron_remove_space_dimensions poly remove) ppl_tcounter_remove_space_dimensions
 
 (** Create a false constraint *)
 let ippl_false_constraint nb_dimensions =
-	ippl_generic (fun () -> ppl_new_NNC_Polyhedron_from_space_dimension nb_dimensions Empty) ppl_tcounter_false_constraint
+	ippl_generic (fun () -> Ppl.ppl_new_NNC_Polyhedron_from_space_dimension nb_dimensions Ppl.Empty) ppl_tcounter_false_constraint
 
 
 let ippl_true_constraint nb_dimensions = 
-	ippl_generic (fun () -> ppl_new_NNC_Polyhedron_from_space_dimension nb_dimensions Universe) ppl_tcounter_true_constraint
+	ippl_generic (fun () -> Ppl.ppl_new_NNC_Polyhedron_from_space_dimension nb_dimensions Ppl.Universe) ppl_tcounter_true_constraint
 
 
 (** Check if a constraint is false *)
 let ippl_is_false c =
-	ippl_generic (fun () -> ppl_Polyhedron_is_empty c) ppl_tcounter_is_false
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_is_empty c) ppl_tcounter_is_false
 
 
 (** Check if a constraint is true *)
 let ippl_is_true c =
-	ippl_generic (fun () -> ppl_Polyhedron_is_universe c) ppl_tcounter_is_true
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_is_universe c) ppl_tcounter_is_true
 
 
 (** Check if 2 constraints are equal *)
 let ippl_is_equal c1 c2 =
-	ippl_generic (fun () -> ppl_Polyhedron_equals_Polyhedron c1 c2) ppl_tcounter_is_equal
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_equals_Polyhedron c1 c2) ppl_tcounter_is_equal
 
 
 (** Check if a constraint is included in another one *)
 let ippl_is_leq x y =
-	ippl_generic (fun () -> ppl_Polyhedron_contains_Polyhedron y x) ppl_tcounter_contains
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_contains_Polyhedron y x) ppl_tcounter_contains
 
 
 (** Check if a constraint contains an integer point *)
 let ippl_contains_integer_point c =
-	ippl_generic (fun () -> ppl_Polyhedron_contains_integer_point c) ppl_tcounter_contains_integer_point
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_contains_integer_point c) ppl_tcounter_contains_integer_point
 
 (** Return true if the variable is constrained in a linear_constraint *)
 let ippl_is_constrained =
-	ippl_generic (fun () -> ppl_Polyhedron_constrains) ppl_tcounter_constrains
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_constrains) ppl_tcounter_constrains
 	
 (** Return true if the variable is constrained from above by a linear_expression *)
 let ippl_bounds_from_above =
-	ippl_generic (fun () -> ppl_Polyhedron_bounds_from_above) ppl_tcounter_bounds_from_above
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_bounds_from_above) ppl_tcounter_bounds_from_above
 	
 
 let ippl_copy_linear_constraint linear_constraint =
-	ippl_generic (fun () -> ppl_new_NNC_Polyhedron_from_NNC_Polyhedron linear_constraint) ppl_tcounter_copy
+	ippl_generic (fun () -> Ppl.ppl_new_NNC_Polyhedron_from_NNC_Polyhedron linear_constraint) ppl_tcounter_copy
 
 (*
 (** Perform the hull (version with side effect) *)
@@ -476,7 +476,7 @@ let ippl_hull_assign linear_constraint1 linear_constraint2 =
 
 (** Perform the hull if the result is exact (version with side effect) *)
 let ippl_hull_assign_if_exact linear_constraint1 linear_constraint2 =
-	ippl_generic (fun () -> ppl_Polyhedron_poly_hull_assign_if_exact linear_constraint1 linear_constraint2) ppl_tcounter_hull_assign_if_exact
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_poly_hull_assign_if_exact linear_constraint1 linear_constraint2) ppl_tcounter_hull_assign_if_exact
 (*** TODO: also count if false / if true ***)
 (*
 	let hull_assign_if_exact linear_constraint1 linear_constraint2 =
@@ -508,24 +508,24 @@ let ippl_difference_assign linear_constraint1 linear_constraint2 =
 
 (* Unconstrain, i.e., remove dimensions using variable elimination *)
 let ippl_unconstrain linear_constraint variables =
-	ippl_generic (fun () -> ppl_Polyhedron_unconstrain_space_dimensions linear_constraint variables) ppl_tcounter_unconstrain
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_unconstrain_space_dimensions linear_constraint variables) ppl_tcounter_unconstrain
 
 
 (** Add nb_dimensions to a linear_constraint *)
 let ippl_add_dimensions nb_dimensions linear_constraint =
-	ippl_generic (fun () -> ppl_Polyhedron_add_space_dimensions_and_project linear_constraint nb_dimensions) ppl_tcounter_add_space_dimensions_and_project
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_add_space_dimensions_and_project linear_constraint nb_dimensions) ppl_tcounter_add_space_dimensions_and_project
 	
 (** Remove dimensions beyond 'new_dimensions' *)
 let ippl_remove_higher_dimensions linear_constraint new_dimensions =
-	ippl_generic (fun () -> ppl_Polyhedron_remove_higher_space_dimensions linear_constraint new_dimensions) ppl_tcounter_remove_higher_dimensions
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_remove_higher_space_dimensions linear_constraint new_dimensions) ppl_tcounter_remove_higher_dimensions
 	
 (** Rename variables *)
 let ippl_map_space_dimensions linear_constraint list_of_pairs =
-	ippl_generic (fun () -> ppl_Polyhedron_map_space_dimensions linear_constraint list_of_pairs) ppl_tcounter_map_space_dimensions
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_map_space_dimensions linear_constraint list_of_pairs) ppl_tcounter_map_space_dimensions
 
 (** Time elapsing *)
 let ippl_time_elapse_assign linear_constraint linear_constraint_time =
-	ippl_generic (fun () -> ppl_Polyhedron_time_elapse_assign linear_constraint linear_constraint_time) ppl_time_elapse_assign
+	ippl_generic (fun () -> Ppl.ppl_Polyhedron_time_elapse_assign linear_constraint linear_constraint_time) ppl_time_elapse_assign
 
 
 (*------------------------------------------------------------*)
@@ -533,76 +533,76 @@ let ippl_time_elapse_assign linear_constraint linear_constraint_time =
 (*------------------------------------------------------------*)
 
 let ippl_nncc_space_dimension c =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_space_dimension c) ppl_nncc_tcounter_space_dimension
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_space_dimension c) ppl_nncc_tcounter_space_dimension
 
 (** Create a false non-necessarily convex constraint *)
 let ippl_nncc_false_constraint nb_dimensions =
-	ippl_generic (fun () -> ppl_new_Pointset_Powerset_NNC_Polyhedron_from_space_dimension nb_dimensions Empty) ppl_nncc_false_constraint
+	ippl_generic (fun () -> Ppl.ppl_new_Pointset_Powerset_NNC_Polyhedron_from_space_dimension nb_dimensions Ppl.Empty) ppl_nncc_false_constraint
 
 (** Create a true non-necessarily convex constraint *)
 let ippl_nncc_true_constraint nb_dimensions =
-	ippl_generic (fun () -> ppl_new_Pointset_Powerset_NNC_Polyhedron_from_space_dimension nb_dimensions Universe) ppl_nncc_true_constraint
+	ippl_generic (fun () -> Ppl.ppl_new_Pointset_Powerset_NNC_Polyhedron_from_space_dimension nb_dimensions Ppl.Universe) ppl_nncc_true_constraint
 
 (** Create a new p_nnconvex_constraint from a linear_constraint *)
 let ippl_nncc_from_poly polyhedron =
-	ippl_generic (fun () -> ppl_new_Pointset_Powerset_NNC_Polyhedron_from_NNC_Polyhedron polyhedron) ppl_nncc_from_poly
+	ippl_generic (fun () -> Ppl.ppl_new_Pointset_Powerset_NNC_Polyhedron_from_NNC_Polyhedron polyhedron) ppl_nncc_from_poly
 
 (** Create a true non-necessarily convex constraint *)
 let ippl_nncc_copy nnconvex_constraint =
-	ippl_generic (fun () -> ppl_new_Pointset_Powerset_NNC_Polyhedron_from_Pointset_Powerset_NNC_Polyhedron nnconvex_constraint ) ppl_nncc_copy
+	ippl_generic (fun () -> Ppl.ppl_new_Pointset_Powerset_NNC_Polyhedron_from_Pointset_Powerset_NNC_Polyhedron nnconvex_constraint ) ppl_nncc_copy
 
 (** Iterators *)
 
 let ippl_nncc_begin_iterator nnconvex_constraint =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_begin_iterator nnconvex_constraint) ppl_nncc_begin_iterator
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_begin_iterator nnconvex_constraint) ppl_nncc_begin_iterator
 
 let ippl_nncc_end_iterator nnconvex_constraint =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_end_iterator nnconvex_constraint) ppl_nncc_end_iterator
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_end_iterator nnconvex_constraint) ppl_nncc_end_iterator
 
 let ippl_nncc_equals_iterator iterator1 iterator2 =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_iterator_equals_iterator iterator1 iterator2) ppl_nncc_equals_iterator
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_iterator_equals_iterator iterator1 iterator2) ppl_nncc_equals_iterator
 
 let ippl_nncc_increment_iterator iterator =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_increment_iterator iterator) ppl_nncc_increment_iterator
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_increment_iterator iterator) ppl_nncc_increment_iterator
 
 let ippl_nncc_get_disjunct iterator =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_get_disjunct iterator) ppl_nncc_get_disjunct
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_get_disjunct iterator) ppl_nncc_get_disjunct
 
 
 (** Check if a nnconvex_constraint is false *)
 let ippl_nncc_is_empty nnconvex_constraint =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_is_empty nnconvex_constraint) ppl_nncc_is_empty
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_is_empty nnconvex_constraint) ppl_nncc_is_empty
 
 (** Check if a nnconvex_constraint is true *)
 let ippl_nncc_is_universe nnconvex_constraint =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_is_universe nnconvex_constraint) ppl_nncc_is_universe
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_is_universe nnconvex_constraint) ppl_nncc_is_universe
 
 let ippl_nncc_geometrically_covers nnconvex_constraint nnconvex_constraint' =
 	ippl_generic (fun () ->
 		(*** NOTE: ppl_Pointset_Powerset_NNC_Polyhedron_contains_Pointset_Powerset_NNC_Polyhedron is NOT the right function, as it checks whether each disjunct of p is contained in a disjunct of p'. ***)
-		ppl_Pointset_Powerset_NNC_Polyhedron_geometrically_covers_Pointset_Powerset_NNC_Polyhedron nnconvex_constraint nnconvex_constraint') ppl_nncc_geometrically_covers
+		Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_geometrically_covers_Pointset_Powerset_NNC_Polyhedron nnconvex_constraint nnconvex_constraint') ppl_nncc_geometrically_covers
 
 let ippl_nncc_geometrically_equals nnconvex_constraint nnconvex_constraint' =
 	(*** NOTE: ppl_Pointset_Powerset_NNC_Polyhedron_equals_Pointset_Powerset_NNC_Polyhedron is NOT the right function ***)
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_geometrically_equals_Pointset_Powerset_NNC_Polyhedron nnconvex_constraint nnconvex_constraint') ppl_nncc_geometrically_equals
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_geometrically_equals_Pointset_Powerset_NNC_Polyhedron nnconvex_constraint nnconvex_constraint') ppl_nncc_geometrically_equals
 
 let ippl_nncc_pairwise_reduce nnconvex_constraint =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_pairwise_reduce nnconvex_constraint) ppl_nncc_pairwise_reduce
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_pairwise_reduce nnconvex_constraint) ppl_nncc_pairwise_reduce
 
 let ippl_nncc_omega_reduce nnconvex_constraint =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_omega_reduce nnconvex_constraint) ppl_nncc_omega_reduce
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_omega_reduce nnconvex_constraint) ppl_nncc_omega_reduce
 	
 let ippl_nncc_add_constraints nnconvex_constraint constraint_system =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_add_constraints nnconvex_constraint constraint_system) ppl_nncc_add_constraints
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_add_constraints nnconvex_constraint constraint_system) ppl_nncc_add_constraints
 
 let ippl_nncc_add_disjunct nnconvex_constraint p_linear_constraint=
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_add_disjunct nnconvex_constraint p_linear_constraint) ppl_nncc_add_disjunct
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_add_disjunct nnconvex_constraint p_linear_constraint) ppl_nncc_add_disjunct
 
 let ippl_nncc_difference_assign nnconvex_constraint nnconvex_constraint' =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_difference_assign nnconvex_constraint nnconvex_constraint') ppl_nncc_difference_assign
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_difference_assign nnconvex_constraint nnconvex_constraint') ppl_nncc_difference_assign
 
 let ippl_nncc_remove_higher_space_dimensions nnconvex_constraint new_dimensions =
-	ippl_generic (fun () -> ppl_Pointset_Powerset_NNC_Polyhedron_remove_higher_space_dimensions nnconvex_constraint new_dimensions) ppl_nncc_remove_higher_space_dimensions
+	ippl_generic (fun () -> Ppl.ppl_Pointset_Powerset_NNC_Polyhedron_remove_higher_space_dimensions nnconvex_constraint new_dimensions) ppl_nncc_remove_higher_space_dimensions
 
 
 (*** TODO: more PPL interfaces ***)
@@ -696,20 +696,20 @@ let sub_pxd_linear_terms = sub_linear_terms
 (** Check whether a variable appears in a linear_term (with coeff <> 0) *)
 (*------------------------------------------------------------*)
 let rec variable_in_linear_term v = function
-	| Variable variable -> v = variable
-	| Coefficient _ -> false
-	| Unary_Plus linear_expression -> variable_in_linear_term v linear_expression
-	| Unary_Minus linear_expression -> variable_in_linear_term v linear_expression
-	| Plus (linear_expression1, linear_expression2) ->
+	| Ppl.Variable variable -> v = variable
+	| Ppl.Coefficient _ -> false
+	| Ppl.Unary_Plus linear_expression -> variable_in_linear_term v linear_expression
+	| Ppl.Unary_Minus linear_expression -> variable_in_linear_term v linear_expression
+	| Ppl.Plus (linear_expression1, linear_expression2) ->
 		variable_in_linear_term v linear_expression1
 		|| variable_in_linear_term v linear_expression2
-	| Minus (linear_expression1, linear_expression2) ->
+	| Ppl.Minus (linear_expression1, linear_expression2) ->
 		variable_in_linear_term v linear_expression1
 		|| variable_in_linear_term v linear_expression2
-	| Times (coeff, rterm) ->
+	| Ppl.Times (coeff, rterm) ->
 		if Gmp.Z.equal coeff (Gmp.Z.zero) then false
 		else (match rterm with
-			| Variable variable -> v = variable
+			| Ppl.Variable variable -> v = variable
 			| _ -> raise (InternalError ("In function 'variable_in_linear_term', pattern 'Times' was expected to be only used for coeff * variable."))
 		)
 
@@ -720,24 +720,24 @@ let rec variable_in_linear_term v = function
 (* Intermediate, recursive function. nb_times_ref is an int ref. coeff_option is a NumConst.t ref option. minus_flag is a flag to check whether we are in some negative coefficient. *)
 
 let rec get_variable_coef_in_linear_term_rec nb_times_ref coeff_option minus_flag v = function
-	| Variable variable -> if v = variable then(
+	| Ppl.Variable variable -> if v = variable then(
 			nb_times_ref := !nb_times_ref + 1;
 			coeff_option := Some (if minus_flag then NumConst.minus_one else NumConst.one);
 		)
-	| Coefficient _ -> ()
-	| Unary_Plus linear_expression -> get_variable_coef_in_linear_term_rec nb_times_ref coeff_option minus_flag v linear_expression
+	| Ppl.Coefficient _ -> ()
+	| Ppl.Unary_Plus linear_expression -> get_variable_coef_in_linear_term_rec nb_times_ref coeff_option minus_flag v linear_expression
 	(* If minus: revert flag *)
-	| Unary_Minus linear_expression -> get_variable_coef_in_linear_term_rec nb_times_ref coeff_option (not minus_flag) v linear_expression
-	| Plus (linear_expression1, linear_expression2) ->
+	| Ppl.Unary_Minus linear_expression -> get_variable_coef_in_linear_term_rec nb_times_ref coeff_option (not minus_flag) v linear_expression
+	| Ppl.Plus (linear_expression1, linear_expression2) ->
 		get_variable_coef_in_linear_term_rec nb_times_ref coeff_option minus_flag v linear_expression1;
 		get_variable_coef_in_linear_term_rec nb_times_ref coeff_option minus_flag v linear_expression2
-	| Minus (linear_expression1, linear_expression2) ->
+	| Ppl.Minus (linear_expression1, linear_expression2) ->
 		get_variable_coef_in_linear_term_rec nb_times_ref coeff_option minus_flag v linear_expression1;
 		get_variable_coef_in_linear_term_rec nb_times_ref coeff_option (not minus_flag) v linear_expression2;
-	| Times (coeff, rterm) ->
+	| Ppl.Times (coeff, rterm) ->
 		if Gmp.Z.equal coeff (Gmp.Z.zero) then ()
 		else (match rterm with
-			| Variable variable -> if v = variable then(
+			| Ppl.Variable variable -> if v = variable then(
 				nb_times_ref := !nb_times_ref + 1;
 				let coef = NumConst.numconst_of_mpz coeff in
 				coeff_option := Some (if minus_flag then NumConst.neg coef else coef);
@@ -771,22 +771,22 @@ exception Found_coef of NumConst.t
 
 (* First a recursive function *)
 let rec get_coefficient_in_linear_term_rec minus_flag = function
-	| Variable variable -> ()
-	| Coefficient c ->
+	| Ppl.Variable variable -> ()
+	| Ppl.Coefficient c ->
 		let numconst_coef = NumConst.numconst_of_mpz c in
 		raise (Found_coef (if minus_flag then NumConst.neg numconst_coef else numconst_coef))
-	| Unary_Plus linear_expression -> get_coefficient_in_linear_term_rec minus_flag linear_expression
-	| Unary_Minus linear_expression -> get_coefficient_in_linear_term_rec (not minus_flag) linear_expression
-	| Plus (linear_expression1, linear_expression2) ->
+	| Ppl.Unary_Plus linear_expression -> get_coefficient_in_linear_term_rec minus_flag linear_expression
+	| Ppl.Unary_Minus linear_expression -> get_coefficient_in_linear_term_rec (not minus_flag) linear_expression
+	| Ppl.Plus (linear_expression1, linear_expression2) ->
 		get_coefficient_in_linear_term_rec minus_flag linear_expression1;
 		get_coefficient_in_linear_term_rec minus_flag linear_expression2;
-	| Minus (linear_expression1, linear_expression2) ->
+	| Ppl.Minus (linear_expression1, linear_expression2) ->
 		get_coefficient_in_linear_term_rec minus_flag linear_expression1;
 		get_coefficient_in_linear_term_rec (not minus_flag) linear_expression2;
-	| Times (coeff, rterm) ->
+	| Ppl.Times (coeff, rterm) ->
 		if Gmp.Z.equal coeff (Gmp.Z.zero) then ()
 		else (match rterm with
-			| Variable variable -> ()
+			| Ppl.Variable variable -> ()
 			| _ -> raise (InternalError ("In function 'get_coefficient_in_linear_term_rec', pattern 'Times' was expected to be only used for coeff * variable."))
 		)
 
@@ -836,21 +836,21 @@ let evaluate_pxd_linear_term = evaluate_linear_term
 (** Evaluate a linear term (PPL) with a function assigning a value to each variable. *)
 let rec evaluate_linear_term_ppl valuation_function linear_term =
 	match linear_term with
-		| Coefficient z -> NumConst.numconst_of_mpz z
-		| Variable v -> (
+		| Ppl.Coefficient z -> NumConst.numconst_of_mpz z
+		| Ppl.Variable v -> (
 			  try valuation_function v 
 			  with _ -> raise(InternalError ("Error when evaluating variable " ^ (string_of_int v) ^ ", while trying to evaluate a linear term; this variable was probably not defined in the valuation function.")))
-		| Unary_Plus t -> evaluate_linear_term_ppl valuation_function t
-		| Unary_Minus t -> NumConst.neg (evaluate_linear_term_ppl valuation_function t)
-		| Plus (lterm, rterm) -> (
+		| Ppl.Unary_Plus t -> evaluate_linear_term_ppl valuation_function t
+		| Ppl.Unary_Minus t -> NumConst.neg (evaluate_linear_term_ppl valuation_function t)
+		| Ppl.Plus (lterm, rterm) -> (
 				let lval = evaluate_linear_term_ppl valuation_function lterm in
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.add lval rval)
-		| Minus (lterm, rterm) -> (
+		| Ppl.Minus (lterm, rterm) -> (
 				let lval = evaluate_linear_term_ppl valuation_function lterm in
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.sub lval rval)
-		| Times (z, rterm) -> ( 
+		| Ppl.Times (z, rterm) -> ( 
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.mul (NumConst.numconst_of_mpz z) rval)
 
@@ -890,29 +890,29 @@ let string_of_pxd_linear_term = string_of_linear_term
 (** Convert a linear term (PPL) into a string *)
 let rec string_of_linear_term_ppl names linear_term =
 	match linear_term with
-		| Coefficient z -> Gmp.Z.string_from z
-		| Variable v -> names v
-		| Unary_Plus t -> string_of_linear_term_ppl names t
-		| Unary_Minus t -> (
+		| Ppl.Coefficient z -> Gmp.Z.string_from z
+		| Ppl.Variable v -> names v
+		| Ppl.Unary_Plus t -> string_of_linear_term_ppl names t
+		| Ppl.Unary_Minus t -> (
 				let str = string_of_linear_term_ppl names t in
 				"-(" ^ str ^ ")")
-		| Plus (lterm, rterm) -> (
+		| Ppl.Plus (lterm, rterm) -> (
 			  let lstr = string_of_linear_term_ppl names lterm in
 				let rstr = string_of_linear_term_ppl names rterm in
 				lstr ^ " + " ^ rstr )
-		| Minus (lterm, rterm) -> (
+		| Ppl.Minus (lterm, rterm) -> (
 			  let lstr = string_of_linear_term_ppl names lterm in
 				let rstr = string_of_linear_term_ppl names rterm in
 				lstr ^ " - (" ^ rstr ^ ")" )
-		| Times (z, rterm) -> (
+		| Ppl.Times (z, rterm) -> (
 				let fstr = Gmp.Z.string_from z in
 				let tstr = string_of_linear_term_ppl names rterm in
 				if (Gmp.Z.equal z (Gmp.Z.one)) then
 					tstr
 				else 
 					match rterm with
-						| Coefficient _ -> fstr ^ "*" ^ tstr
-						| Variable    _ -> fstr ^ "*" ^ tstr
+						| Ppl.Coefficient _ -> fstr ^ "*" ^ tstr
+						| Ppl.Variable    _ -> fstr ^ "*" ^ tstr
 						| _ -> fstr ^ " * (" ^ tstr ^ ")" )
 				
 
@@ -935,19 +935,19 @@ let rec string_of_linear_term_ppl names linear_term =
 let ppl_linear_expression_of_linear_term (linear_term : linear_term) : Ppl.linear_expression =
 	let ppl_term, r = normalize_linear_term linear_term in
 	let p = NumConst.get_num r in
-	Times (p, ppl_term)
+	Ppl.Times (p, ppl_term)
 
 
 (** Create a linear inequality using a linear term and an operator *)
 let make_linear_inequality linear_term op =
 	let lin_term = ppl_linear_expression_of_linear_term linear_term in
-	let zero_term = Coefficient Gmp.Z.zero in
+	let zero_term = Ppl.Coefficient Gmp.Z.zero in
 	match op with
-		| Op_g -> Greater_Than (lin_term, zero_term)
-		| Op_ge -> Greater_Or_Equal (lin_term, zero_term)
-		| Op_eq -> Equal (lin_term, zero_term)
-		| Op_le -> Less_Or_Equal (lin_term, zero_term)
-		| Op_l -> Less_Than (lin_term, zero_term)
+		| Op_g -> Ppl.Greater_Than (lin_term, zero_term)
+		| Op_ge -> Ppl.Greater_Or_Equal (lin_term, zero_term)
+		| Op_eq -> Ppl.Equal (lin_term, zero_term)
+		| Op_le -> Ppl.Less_Or_Equal (lin_term, zero_term)
+		| Op_l -> Ppl.Less_Than (lin_term, zero_term)
 
 
 let make_p_linear_inequality = make_linear_inequality
@@ -960,42 +960,42 @@ let make_pxd_linear_inequality = make_linear_inequality
 
 (** split a linear inequality into its two terms and the operator *)
 let split_linear_inequality = function
-	| Less_Than (lterm, rterm) -> lterm, rterm, Less_Than_RS
-	| Less_Or_Equal (lterm, rterm) -> lterm, rterm, Less_Or_Equal_RS
-	| Equal (lterm, rterm) -> lterm, rterm, Equal_RS
-	| Greater_Than (lterm, rterm) -> lterm, rterm, Greater_Than_RS
-	| Greater_Or_Equal (lterm, rterm) -> lterm, rterm, Greater_Or_Equal_RS
+	| Ppl.Less_Than (lterm, rterm) -> lterm, rterm, Ppl.Less_Than_RS
+	| Ppl.Less_Or_Equal (lterm, rterm) -> lterm, rterm, Ppl.Less_Or_Equal_RS
+	| Ppl.Equal (lterm, rterm) -> lterm, rterm, Ppl.Equal_RS
+	| Ppl.Greater_Than (lterm, rterm) -> lterm, rterm, Ppl.Greater_Than_RS
+	| Ppl.Greater_Or_Equal (lterm, rterm) -> lterm, rterm, Ppl.Greater_Or_Equal_RS
 	
 (** build a linear inequality from two terms and an operator *)
 let build_linear_inequality lterm rterm op = 
 	match op with
-		| Less_Than_RS -> Less_Than (lterm, rterm)
-		| Less_Or_Equal_RS -> Less_Or_Equal (lterm, rterm)
-		| Equal_RS -> Equal (lterm, rterm)
-		| Greater_Than_RS -> Greater_Than (lterm, rterm)
-		| Greater_Or_Equal_RS -> Greater_Or_Equal (lterm, rterm)
+		| Ppl.Less_Than_RS -> Ppl.Less_Than (lterm, rterm)
+		| Ppl.Less_Or_Equal_RS -> Ppl.Less_Or_Equal (lterm, rterm)
+		| Ppl.Equal_RS -> Ppl.Equal (lterm, rterm)
+		| Ppl.Greater_Than_RS -> Ppl.Greater_Than (lterm, rterm)
+		| Ppl.Greater_Or_Equal_RS -> Ppl.Greater_Or_Equal (lterm, rterm)
 
 
 (** evaluate a linear inequality for a given valuation *)
 let evaluate_linear_inequality valuation_function linear_inequality =
 	match linear_inequality with 
-		| Less_Than (lterm, rterm) -> (
+		| Ppl.Less_Than (lterm, rterm) -> (
 				let lval = evaluate_linear_term_ppl valuation_function lterm in
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.l lval rval )
-		| Less_Or_Equal (lterm, rterm) -> (
+		| Ppl.Less_Or_Equal (lterm, rterm) -> (
 				let lval = evaluate_linear_term_ppl valuation_function lterm in
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.le lval rval )
-		| Equal (lterm, rterm) -> (
+		| Ppl.Equal (lterm, rterm) -> (
 				let lval = evaluate_linear_term_ppl valuation_function lterm in
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.equal lval rval )
-		| Greater_Than (lterm, rterm) -> (
+		| Ppl.Greater_Than (lterm, rterm) -> (
 				let lval = evaluate_linear_term_ppl valuation_function lterm in
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.g lval rval )
-		| Greater_Or_Equal (lterm, rterm) -> (
+		| Ppl.Greater_Or_Equal (lterm, rterm) -> (
 				let lval = evaluate_linear_term_ppl valuation_function lterm in
 				let rval = evaluate_linear_term_ppl valuation_function rterm in
 				NumConst.ge lval rval )
@@ -1003,8 +1003,8 @@ let evaluate_linear_inequality valuation_function linear_inequality =
 (* Transform a strict inequality into a non-strict inequality *)
 let strict_to_not_strict_inequality inequality =
 	match inequality with
-		| Less_Than (x,y) -> Less_Or_Equal (x,y)
-		| Greater_Than (x,y) -> Greater_Or_Equal (x,y)
+		| Ppl.Less_Than (x,y) -> Ppl.Less_Or_Equal (x,y)
+		| Ppl.Greater_Than (x,y) -> Ppl.Greater_Or_Equal (x,y)
 		|_ -> inequality
 
 
@@ -1021,18 +1021,18 @@ let is_pi0_compatible_inequality pi0 linear_inequality =
 (** Negate a linear inequality; for an equality, perform the pi0-compatible negation *)
 let negate_wrt_pi0 pi0 linear_inequality = 
 	match linear_inequality with
-		| Less_Than (lterm, rterm) -> Greater_Or_Equal (lterm, rterm)
-		| Less_Or_Equal (lterm, rterm) -> Greater_Than (lterm, rterm)
-		| Greater_Than (lterm, rterm) -> Less_Or_Equal (lterm, rterm)
-		| Greater_Or_Equal (lterm, rterm) -> Less_Than (lterm, rterm)
-		| Equal (lterm, rterm) -> (
+		| Ppl.Less_Than (lterm, rterm) -> Ppl.Greater_Or_Equal (lterm, rterm)
+		| Ppl.Less_Or_Equal (lterm, rterm) -> Ppl.Greater_Than (lterm, rterm)
+		| Ppl.Greater_Than (lterm, rterm) -> Ppl.Less_Or_Equal (lterm, rterm)
+		| Ppl.Greater_Or_Equal (lterm, rterm) -> Ppl.Less_Than (lterm, rterm)
+		| Ppl.Equal (lterm, rterm) -> (
 				(* perform the negation compatible with pi0 *)
 				let lval = evaluate_linear_term_ppl pi0 lterm in
 				let rval = evaluate_linear_term_ppl pi0 rterm in
 				if NumConst.g lval rval then
-					Greater_Than (lterm, rterm)
+					Ppl.Greater_Than (lterm, rterm)
 				else if NumConst.l lval rval then
-					Less_Than (lterm, rterm)
+					Ppl.Less_Than (lterm, rterm)
 				else(
 					raise (InternalError "Trying to negate an equality already true w.r.t. pi0")
 				)
@@ -1041,11 +1041,11 @@ let negate_wrt_pi0 pi0 linear_inequality =
 
 (** Negate an inequality ('=' is disallowed); raises InternalError if "=" is used *)
 let negate_inequality = function
-	| Less_Than (lterm, rterm) -> Greater_Or_Equal (lterm, rterm)
-	| Less_Or_Equal (lterm, rterm) -> Greater_Than (lterm, rterm)
-	| Greater_Than (lterm, rterm) -> Less_Or_Equal (lterm, rterm)
-	| Greater_Or_Equal (lterm, rterm) -> Less_Than (lterm, rterm)
-	| Equal (lterm, rterm) -> raise (InternalError "Trying to negate an equality in negate_inequality")
+	| Ppl.Less_Than (lterm, rterm) -> Ppl.Greater_Or_Equal (lterm, rterm)
+	| Ppl.Less_Or_Equal (lterm, rterm) -> Ppl.Greater_Than (lterm, rterm)
+	| Ppl.Greater_Than (lterm, rterm) -> Ppl.Less_Or_Equal (lterm, rterm)
+	| Ppl.Greater_Or_Equal (lterm, rterm) -> Ppl.Less_Than (lterm, rterm)
+	| Ppl.Equal (lterm, rterm) -> raise (InternalError "Trying to negate an equality in negate_inequality")
 
 
 
@@ -1056,7 +1056,7 @@ let negate_inequality = function
 
 let is_zero_coef = function
 	(*** NOTE: "=!" is the equality comparison, not the "!=" operator :) ***)
-	| Coefficient c -> c =! Gmp.Z.zero
+	| Ppl.Coefficient c -> c =! Gmp.Z.zero
 	| _ -> false
 
 
@@ -1069,39 +1069,39 @@ let compact_sum lexpr rexpr =
 		if is_zero_coef rexpr then (
 			lexpr
 		) else (
-			Plus (lexpr, rexpr)
+			Ppl.Plus (lexpr, rexpr)
 		))
 
 (** splits an expression into positive and negative part for pretty printing;
  	  an expression a-b is mapped to (a, b) *) 
 let rec sign_split_expression = function
-	| Coefficient c ->
+	| Ppl.Coefficient c ->
 		if c <! Gmp.Z.zero then (
-			(Coefficient Gmp.Z.zero, Coefficient (Gmp.Z.neg c))
+			(Ppl.Coefficient Gmp.Z.zero, Ppl.Coefficient (Gmp.Z.neg c))
 		) else (
-			(Coefficient c, Coefficient Gmp.Z.zero)
+			(Ppl.Coefficient c, Ppl.Coefficient Gmp.Z.zero)
 		)
-	| Variable v -> (Variable v, Coefficient Gmp.Z.zero)
-	| Unary_Plus expr -> sign_split_expression expr
-	| Unary_Minus expr ->
+	| Ppl.Variable v -> (Ppl.Variable v, Ppl.Coefficient Gmp.Z.zero)
+	| Ppl.Unary_Plus expr -> sign_split_expression expr
+	| Ppl.Unary_Minus expr ->
 		let pos, neg = sign_split_expression expr in (neg, pos)
-	| Plus (lexpr, rexpr) -> 
+	| Ppl.Plus (lexpr, rexpr) -> 
 		let lpos, lneg = sign_split_expression lexpr in
 		let rpos, rneg = sign_split_expression rexpr in
 		let new_pos = compact_sum lpos rpos in 
 		let new_neg = compact_sum lneg rneg in 
 		(new_pos, new_neg)
-	| Minus (lexpr, rexpr) -> 
-		sign_split_expression (Plus (lexpr, Unary_Minus rexpr))
-	| Times (c, expr) -> 
+	| Ppl.Minus (lexpr, rexpr) -> 
+		sign_split_expression (Ppl.Plus (lexpr, Ppl.Unary_Minus rexpr))
+	| Ppl.Times (c, expr) -> 
 		let pos, neg = sign_split_expression expr in
 		let invert = c <! Gmp.Z.zero in
 		let new_c = if invert then Gmp.Z.neg c else c in
 		if new_c =! Gmp.Z.one then (
 			if invert then (neg, pos) else (pos, neg)
 		) else (
-			let new_pos = if is_zero_coef pos then Coefficient Gmp.Z.zero else Times (new_c, pos) in
-			let new_neg = if is_zero_coef neg then Coefficient Gmp.Z.zero else Times (new_c, neg) in
+			let new_pos = if is_zero_coef pos then Ppl.Coefficient Gmp.Z.zero else Ppl.Times (new_c, pos) in
+			let new_neg = if is_zero_coef neg then Ppl.Coefficient Gmp.Z.zero else Ppl.Times (new_c, neg) in
 			if invert then (new_neg, new_pos) else (new_pos, new_neg)
 		)			
 
@@ -1124,11 +1124,11 @@ let string_of_linear_inequality names linear_inequality =
 	let lstr = string_of_linear_term_ppl names lterm in
 	let rstr = string_of_linear_term_ppl names rterm in	
 	let opstr = match op with
-		| Less_Than_RS -> " < "
-		| Less_Or_Equal_RS -> " <= "
-		| Equal_RS -> " = "
-		| Greater_Or_Equal_RS -> " >= "
-		| Greater_Than_RS -> " > "
+		| Ppl.Less_Than_RS -> " < "
+		| Ppl.Less_Or_Equal_RS -> " <= "
+		| Ppl.Equal_RS -> " = "
+		| Ppl.Greater_Or_Equal_RS -> " >= "
+		| Ppl.Greater_Than_RS -> " > "
 	in
 	lstr ^ opstr ^ rstr
 
@@ -1150,12 +1150,16 @@ let clock_guard_of_linear_inequality linear_inequality =
 	(* First get both linear terms *)
 	let lterm, rterm =
 	match linear_inequality with
-	| Less_Than (lterm, rterm) | Less_Or_Equal (lterm, rterm)  | Greater_Than (lterm, rterm)  | Greater_Or_Equal (lterm, rterm) | Equal (lterm, rterm) ->
+	| Ppl.Less_Than (lterm, rterm)
+        | Ppl.Less_Or_Equal (lterm, rterm)
+        | Ppl.Greater_Than (lterm, rterm)
+        | Ppl.Greater_Or_Equal (lterm, rterm)
+        | Ppl.Equal (lterm, rterm) ->
 		lterm, rterm
 	in
 	
 	(* Compute lterm - rterm *)
-	let linear_term = Minus (lterm, rterm) in
+	let linear_term = Ppl.Minus (lterm, rterm) in
 	
 (*	print_newline();
 	print_string (string_of_linear_term_ppl (fun i -> "v_" ^ (string_of_int i)) linear_term);
@@ -1262,11 +1266,11 @@ let clock_guard_of_linear_inequality linear_inequality =
 	(* Retrieve the operator *)
 	let operator =
 	match linear_inequality with
-		| Less_Than _ -> if !positive_clock_option = Some true then Op_l else Op_g
-		| Less_Or_Equal _ -> if !positive_clock_option = Some true then Op_le else Op_ge
-		| Greater_Than _ -> if !positive_clock_option = Some true then Op_g else Op_l
-		| Greater_Or_Equal _ -> if !positive_clock_option = Some true then Op_ge else Op_le
-		| Equal _ -> Op_eq
+		| Ppl.Less_Than _ -> if !positive_clock_option = Some true then Op_l else Op_g
+		| Ppl.Less_Or_Equal _ -> if !positive_clock_option = Some true then Op_le else Op_ge
+		| Ppl.Greater_Than _ -> if !positive_clock_option = Some true then Op_g else Op_l
+		| Ppl.Greater_Or_Equal _ -> if !positive_clock_option = Some true then Op_ge else Op_le
+		| Ppl.Equal _ -> Op_eq
 	in
 
 	(* Return the result *)
@@ -1582,21 +1586,21 @@ let partition_lu variables linear_constraints =
 	
 	(* Function to update the hash table for a linear_term; the Bool lower_side specifies whether the considered linear_term is on the lower side of an inequality *)
 	let rec check_linear_term lower_side = function
-		| Variable variable -> update_variable lower_side variable
-		| Coefficient _ -> ()
-		| Unary_Plus linear_expression -> check_linear_term lower_side linear_expression
-		| Unary_Minus linear_expression -> check_linear_term (not lower_side) linear_expression
-		| Plus (linear_expression1, linear_expression2) ->
+		| Ppl.Variable variable -> update_variable lower_side variable
+		| Ppl.Coefficient _ -> ()
+		| Ppl.Unary_Plus linear_expression -> check_linear_term lower_side linear_expression
+		| Ppl.Unary_Minus linear_expression -> check_linear_term (not lower_side) linear_expression
+		| Ppl.Plus (linear_expression1, linear_expression2) ->
 			check_linear_term lower_side linear_expression1;
 			check_linear_term lower_side linear_expression2
-		| Minus (linear_expression1, linear_expression2) ->
+		| Ppl.Minus (linear_expression1, linear_expression2) ->
 			check_linear_term lower_side linear_expression1;
 			check_linear_term (not lower_side) linear_expression2
-		| Times (coeff, rterm) ->
+		| Ppl.Times (coeff, rterm) ->
 			(* Coeff 0: equivalent to no variable *)
 			if Gmp.Z.equal coeff (Gmp.Z.zero) then ()
 			else (match rterm with
-				| Variable variable ->
+				| Ppl.Variable variable ->
 					update_variable
 						(xor (coeff <! Gmp.Z.zero) lower_side)
 						variable
@@ -1613,20 +1617,20 @@ let partition_lu variables linear_constraints =
 		(* FOR ALL INEQUALITIES IN THAT CONSTRAINT *)
 		List.iter (function
 			(* Case 1: equality --> check if any variable in 'variables' appears in it *)
-			| Equal (lterm, rterm) -> 
+			| Ppl.Equal (lterm, rterm) -> 
 				List.iter (fun variable -> 
 					if variable_in_linear_term variable lterm || variable_in_linear_term variable rterm then raise Not_LU
 				) variables
 
 			(* Case 2a: < / <= --> find L/U variables and update the hash table *)
-			| Less_Than (lterm, rterm)
-			| Less_Or_Equal (lterm, rterm) ->
+			| Ppl.Less_Than (lterm, rterm)
+			| Ppl.Less_Or_Equal (lterm, rterm) ->
 				check_linear_term true lterm;
 				check_linear_term false rterm;
 			
 			(* Case 2b: > / >= --> find L/U variables and update the hash table *)
-			| Greater_Or_Equal (lterm, rterm)
-			| Greater_Than (lterm, rterm) ->
+			| Ppl.Greater_Or_Equal (lterm, rterm)
+			| Ppl.Greater_Than (lterm, rterm) ->
 				check_linear_term false lterm;
 				check_linear_term true rterm;
 			
@@ -1896,12 +1900,12 @@ let negate_single_inequality_nonnegative_p_constraint parameter_index p_linear_c
 	else(
 		(* Let us try to see if the first equality is the form p >= 0 *)
 		let found_p_geq_0 = match List.nth inequalities 0 with
-		| Greater_Or_Equal (Variable p, Coefficient c)
-		| Less_Or_Equal (Coefficient c, Variable p)
+		| Ppl.Greater_Or_Equal (Variable p, Coefficient c)
+		| Ppl.Less_Or_Equal (Coefficient c, Variable p)
 			when p = parameter_index && Gmp.Z.equal c Gmp.Z.zero
 			-> true
-		| Greater_Or_Equal (Times (one, Variable p), Coefficient zero)
-		| Less_Or_Equal (Coefficient zero, Times (one, Variable p))
+		| Ppl.Greater_Or_Equal (Times (one, Variable p), Coefficient zero)
+		| Ppl.Less_Or_Equal (Coefficient zero, Times (one, Variable p))
 			when p = parameter_index && Gmp.Z.equal zero Gmp.Z.zero && Gmp.Z.equal one Gmp.Z.one
 			-> true
 
@@ -2303,27 +2307,27 @@ let partition_pi0_compatible pi0 linear_constraint =
 
 (** Convert a linear term (PPL) into a string *)								
 let rec grml_of_linear_term_ppl names t_level = function
-	| Coefficient z ->
+	| Ppl.Coefficient z ->
 		"\n" ^ (string_n_times t_level "\t") ^ "<attribute name=\"numValue\">" ^ (if Gmp.Z.equal z (Gmp.Z.from_int 0) then "0" else Gmp.Z.string_from z) ^ "</attribute>" 
 	
-	| Variable v ->
+	| Ppl.Variable v ->
 		"\n" ^ (string_n_times t_level "\t") ^ "<attribute name=\"name\">" ^ (names v) ^ "</attribute>" 
 	
-	| Unary_Plus t ->
+	| Ppl.Unary_Plus t ->
 		grml_of_linear_term_ppl names t_level t
 
-	| Unary_Minus t -> 
+	| Ppl.Unary_Minus t -> 
 		"\n" ^ (string_n_times t_level "\t") ^ "<attribute name=\"-\">"
 		^ "\n" ^ (string_n_times (t_level + 1) "\t") ^ "<attribute name=\"numValue\">0</attribute>"
 		^ (grml_of_linear_term_ppl names (t_level + 1) t)
 		^ "\n" ^ (string_n_times t_level "\t") ^ "</attribute>"
 	
-	| Plus (lterm, rterm) ->
+	| Ppl.Plus (lterm, rterm) ->
 		let rightnull =
 		match rterm with
-			| Coefficient z -> Gmp.Z.equal z (Gmp.Z.from_int 0)
-			| Times (z1 , Coefficient z2) -> Gmp.Z.equal z1 (Gmp.Z.from_int 0) || Gmp.Z.equal z2 (Gmp.Z.from_int 0)
-			| Times (z , _) -> Gmp.Z.equal z (Gmp.Z.from_int 0)
+			| Ppl.Coefficient z -> Gmp.Z.equal z (Gmp.Z.from_int 0)
+			| Ppl.Times (z1 , Coefficient z2) -> Gmp.Z.equal z1 (Gmp.Z.from_int 0) || Gmp.Z.equal z2 (Gmp.Z.from_int 0)
+			| Ppl.Times (z , _) -> Gmp.Z.equal z (Gmp.Z.from_int 0)
 			| _ -> false
 		in
 		(* If no right attribute: discard '+' *)
@@ -2335,13 +2339,13 @@ let rec grml_of_linear_term_ppl names t_level = function
 		^ (grml_of_linear_term_ppl names (t_level + 1) rterm)
 		^ "\n" ^ (string_n_times t_level "\t") ^ "</attribute>"
 
-	| Minus (lterm, rterm) ->
+	| Ppl.Minus (lterm, rterm) ->
 		"\n" ^ (string_n_times t_level "\t") ^ "<attribute name=\"-\">"
 		^ (grml_of_linear_term_ppl names (t_level + 1) lterm)
 		^ (grml_of_linear_term_ppl names (t_level + 1) rterm)
 		^ "\n" ^ (string_n_times t_level "\t") ^ "</attribute>"
 	
-	| Times (z, rterm) ->
+	| Ppl.Times (z, rterm) ->
 			(* Check that multiplication is not by one *)
 			if (Gmp.Z.equal z (Gmp.Z.one)) then
 				grml_of_linear_term_ppl names t_level rterm
@@ -2359,11 +2363,11 @@ let grml_of_linear_inequality names t_level linear_inequality =
 	let lstr = grml_of_linear_term_ppl names (t_level + 2) lterm in
 	let rstr = grml_of_linear_term_ppl names (t_level + 2) rterm in
 	let opstr = match op with
-		| Less_Than_RS -> "less"
-		| Less_Or_Equal_RS -> "lessEqual"
-		| Equal_RS -> "equal"
-		| Greater_Than_RS -> "greater"
-		| Greater_Or_Equal_RS -> "greaterEqual" in
+		| Ppl.Less_Than_RS -> "less"
+		| Ppl.Less_Or_Equal_RS -> "lessEqual"
+		| Ppl.Equal_RS -> "equal"
+		| Ppl.Greater_Than_RS -> "greater"
+		| Ppl.Greater_Or_Equal_RS -> "greaterEqual" in
 		""
 	^ "\n" ^ (string_n_times (t_level) "\t") ^ "<attribute name=\"boolExpr\">"
 	^ "\n" ^ (string_n_times (t_level + 1) "\t") ^ "<attribute name=\"" ^ opstr ^ "\">"
@@ -2523,7 +2527,7 @@ type couple = Dot of float*float
 
 (* converts a generator to a 2d point wrt. the first two variables *)
 let point_of_generator = function
-	| Point (expr, c) -> 
+	| Ppl.Point (expr, c) -> 
 			let x, y = 
 				(evaluate_linear_term_ppl (unit_vector 0) expr,
 				 evaluate_linear_term_ppl (unit_vector 1) expr) in
@@ -2531,7 +2535,7 @@ let point_of_generator = function
 			let xf = Gmp.Q.to_float (NumConst.mpq_of_numconst (NumConst.div x q)) in
 			let yf = Gmp.Q.to_float (NumConst.mpq_of_numconst (NumConst.div y q)) in
 			Dot (xf, yf)
-	|Ray (expr) -> 
+	|Ppl.Ray (expr) -> 
 			let x, y = 
 				(evaluate_linear_term_ppl (unit_vector 0) expr,
 				 evaluate_linear_term_ppl (unit_vector 1) expr) in
@@ -3602,18 +3606,18 @@ let unserialize_coef = (*NumConst.numconst_of_string*)Gmp.Z.from_string
 let serialize_ALL_OPS = "<l=g>"
 
 let serialize_op = function
-	| Less_Than_RS -> "<"
-	| Less_Or_Equal_RS -> "l"
-	| Equal_RS -> "="
-	| Greater_Or_Equal_RS -> "g"
-	| Greater_Than_RS -> ">"
+	| Ppl.Less_Than_RS -> "<"
+	| Ppl.Less_Or_Equal_RS -> "l"
+	| Ppl.Equal_RS -> "="
+	| Ppl.Greater_Or_Equal_RS -> "g"
+	| Ppl.Greater_Than_RS -> ">"
 
 let unserialize_op s = match s with
-	| "<" -> Less_Than_RS
-	| "l" -> Less_Or_Equal_RS
-	| "=" -> Equal_RS
-	| "g" -> Greater_Or_Equal_RS
-	| ">" -> Greater_Than_RS
+	| "<" -> Ppl.Less_Than_RS
+	| "l" -> Ppl.Less_Or_Equal_RS
+	| "=" -> Ppl.Equal_RS
+	| "g" -> Ppl.Greater_Or_Equal_RS
+	| ">" -> Ppl.Greater_Than_RS
 	| _ -> raise (SerializationError ("Cannot unserialize op '" ^ s ^ "'."))
 
 
@@ -3625,10 +3629,10 @@ let unserialize_coef_var coef_var_pair_string =
 	match split serialize_SEP_CV coef_var_pair_string with
 	(* Case variable with a coefficient *)
 	| [coef_string ; variable_string ] ->
-		Times (unserialize_coef coef_string , Variable (unserialize_variable variable_string))
+		Ppl.Times (unserialize_coef coef_string , Ppl.Variable (unserialize_variable variable_string))
 	(* Case coefficient alone *)
 	| [coef_string ] ->
-		Coefficient (unserialize_coef coef_string)
+		Ppl.Coefficient (unserialize_coef coef_string)
 	| _ -> raise (SerializationError ("Cannot unserialize string '" ^ coef_var_pair_string ^ "': (coef, variable_index) or coef expected."))
 
 
@@ -3641,11 +3645,11 @@ let unserialize_coef_var coef_var_pair_string =
 let rec serialize_linear_term linear_term =
 	match linear_term with
 	(*** WARNING: slightly problematic translation, as we do not check that a variable is never without a coefficient (in which case it will be interpreted as a coefficient instead of a variable) ***)
-		| Coefficient z -> serialize_coef z
-		| Variable v -> serialize_variable v
-		| Unary_Plus t -> (*serialize_linear_term t*)raise (InternalError("Match Unary_Plus not taken into account in serialization"))
-		| Unary_Minus t -> raise (InternalError("Match Unary_Minus not taken into account in serialization"))
-		| Plus (lterm, rterm) -> (
+		| Ppl.Coefficient z -> serialize_coef z
+		| Ppl.Variable v -> serialize_variable v
+		| Ppl.Unary_Plus t -> (*serialize_linear_term t*)raise (InternalError("Match Unary_Plus not taken into account in serialization"))
+		| Ppl.Unary_Minus t -> raise (InternalError("Match Unary_Minus not taken into account in serialization"))
+		| Ppl.Plus (lterm, rterm) -> (
 			  let lstr = serialize_linear_term lterm in
 				let rstr = serialize_linear_term rterm in
 				lstr ^ serialize_SEP_LT ^ rstr )
@@ -3673,7 +3677,7 @@ let unserialize_linear_term linear_term_string =
 	(* More than one linear term *)
 	| coef_var :: rest ->
 		List.fold_left (fun current_lt coef_var ->
-			Plus(coef_var, current_lt)
+			Ppl.Plus(coef_var, current_lt)
 		) coef_var rest
 	| _ -> raise (SerializationError("Found empty linear term when unserializing."))
 
