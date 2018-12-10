@@ -24,7 +24,7 @@ Executable testator
   Path:       src/
   BuildTools: ocamlbuild
   MainIs:     UnitTestator.ml
-  BuildDepends: gmp, extlib, ppl, str, unix, threads
+  BuildDepends: gmp, extlib, ppl, vpl, str, unix, threads
   CCLib: -static '-lppl -ltinfo -lppl_ocaml -lstdc++ -lgmp -lgmpxx'
 
   CompiledObject: best
